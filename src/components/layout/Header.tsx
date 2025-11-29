@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Menu, X, User, ChevronDown } from 'lucide-react'
+import { Menu, X, UserPlus } from 'lucide-react'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -26,17 +26,17 @@ export default function Header() {
 
           {/* Navigation Desktop */}
           <nav className="hidden lg:flex items-center space-x-8">
+            <Link href="/" className="text-gray-700 hover:text-primary transition">
+              Accueil
+            </Link>
             <Link href="/services" className="text-gray-700 hover:text-primary transition">
-              Services
+              Rechercher un service
             </Link>
             <Link href="/prestataires" className="text-gray-700 hover:text-primary transition">
-              Prestataires
+              Trouver un prestataire
             </Link>
-            <Link href="/comment-ca-marche" className="text-gray-700 hover:text-primary transition">
-              Comment ça marche
-            </Link>
-            <Link href="/blog" className="text-gray-700 hover:text-primary transition">
-              Blog
+            <Link href="/a-propos" className="text-gray-700 hover:text-primary transition">
+              A propos
             </Link>
           </nav>
 
@@ -44,16 +44,16 @@ export default function Header() {
           <div className="hidden lg:flex items-center space-x-4">
             <Link 
               href="/connexion" 
-              className="text-gray-700 hover:text-primary transition flex items-center"
+              className="text-gray-700 hover:text-primary transition"
             >
-              <User className="w-5 h-5 mr-2" />
-              Connexion
+              Se connecter
             </Link>
             <Link 
               href="/inscription" 
-              className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90 transition"
+              className="bg-secondary text-white px-5 py-2.5 rounded-lg hover:bg-secondary/90 transition flex items-center"
             >
-              Inscription
+              <UserPlus className="w-4 h-4 mr-2" />
+              S'inscrire
             </Link>
           </div>
 
@@ -71,48 +71,48 @@ export default function Header() {
           <div className="lg:hidden py-4 border-t">
             <nav className="flex flex-col space-y-4">
               <Link 
+                href="/" 
+                className="text-gray-700 hover:text-primary transition"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Accueil
+              </Link>
+              <Link 
                 href="/services" 
                 className="text-gray-700 hover:text-primary transition"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Services
+                Rechercher un service
               </Link>
               <Link 
                 href="/prestataires" 
                 className="text-gray-700 hover:text-primary transition"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Prestataires
+                Trouver un prestataire
               </Link>
               <Link 
-                href="/comment-ca-marche" 
+                href="/a-propos" 
                 className="text-gray-700 hover:text-primary transition"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Comment ça marche
-              </Link>
-              <Link 
-                href="/blog" 
-                className="text-gray-700 hover:text-primary transition"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Blog
+                A propos
               </Link>
               <hr className="my-2" />
               <Link 
                 href="/connexion" 
-                className="text-gray-700 hover:text-primary transition flex items-center"
+                className="text-gray-700 hover:text-primary transition"
                 onClick={() => setIsMenuOpen(false)}
               >
-                <User className="w-5 h-5 mr-2" />
-                Connexion
+                Se connecter
               </Link>
               <Link 
                 href="/inscription" 
-                className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90 transition text-center"
+                className="bg-secondary text-white px-5 py-2.5 rounded-lg hover:bg-secondary/90 transition flex items-center justify-center"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Inscription
+                <UserPlus className="w-4 h-4 mr-2" />
+                S'inscrire
               </Link>
             </nav>
           </div>
