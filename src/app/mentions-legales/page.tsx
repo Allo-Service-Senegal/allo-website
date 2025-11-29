@@ -34,9 +34,14 @@ export default function MentionsLegales() {
               2. Hébergement
             </h2>
             <div className="text-gray-700 space-y-2">
-              <p><strong>Hébergeur :</strong> Vercel Inc.</p>
+              <p><strong>Hébergeur du site :</strong> Vercel Inc.</p>
               <p><strong>Adresse :</strong> 340 S Lemon Ave #4133, Walnut, CA 91789, USA</p>
               <p><strong>Site web :</strong> www.vercel.com</p>
+            </div>
+            <div className="text-gray-700 space-y-2 mt-4">
+              <p><strong>Nom de domaine enregistré chez :</strong> LWS (Ligne Web Services)</p>
+              <p><strong>Adresse :</strong> 10 rue Penthièvre, 75008 Paris, France</p>
+              <p><strong>Site web :</strong> www.lws.fr</p>
             </div>
           </section>
 

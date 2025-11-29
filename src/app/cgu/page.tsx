@@ -166,6 +166,7 @@ export default function CGU() {
                 <li>Wave</li>
                 <li>Orange Money</li>
                 <li>Free Money</li>
+                <li>Carte bancaire (Visa, Mastercard via PayDunya)</li>
                 <li>Espèces (entre client et prestataire)</li>
               </ul>
               <p>

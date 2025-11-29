@@ -306,7 +306,7 @@ export default function Contact() {
               </h3>
               <p className="text-gray-600 text-sm">
                 Le paiement se fait directement entre vous et le prestataire via Wave, 
-                Orange Money, Free Money ou en espèces.
+                Orange Money, Free Money, carte bancaire (Visa/Mastercard) ou en espèces.
               </p>
             </div>
             <div className="bg-white rounded-xl shadow-sm p-6">

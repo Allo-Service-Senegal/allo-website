@@ -20,16 +20,16 @@ export default function Footer() {
               La marketplace de services de confiance au Sénégal. Connectez-vous avec des professionnels vérifiés.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-white/80 hover:text-secondary transition">
+              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="text-white/80 hover:text-secondary transition">
                 <Facebook className="w-5 h-5" />
               </a>
-              <a href="#" className="text-white/80 hover:text-secondary transition">
+              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-white/80 hover:text-secondary transition">
                 <Instagram className="w-5 h-5" />
               </a>
-              <a href="#" className="text-white/80 hover:text-secondary transition">
+              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-white/80 hover:text-secondary transition">
                 <Twitter className="w-5 h-5" />
               </a>
-              <a href="#" className="text-white/80 hover:text-secondary transition">
+              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-white/80 hover:text-secondary transition">
                 <Linkedin className="w-5 h-5" />
               </a>
             </div>
@@ -40,22 +40,22 @@ export default function Footer() {
             <h3 className="font-semibold text-lg mb-4">Services</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/services/plomberie" className="text-white/80 hover:text-secondary transition">
+                <Link href="/categories/plomberie" className="text-white/80 hover:text-secondary transition">
                   Plomberie
                 </Link>
               </li>
               <li>
-                <Link href="/services/electricite" className="text-white/80 hover:text-secondary transition">
+                <Link href="/categories/electricite" className="text-white/80 hover:text-secondary transition">
                   Électricité
                 </Link>
               </li>
               <li>
-                <Link href="/services/menage" className="text-white/80 hover:text-secondary transition">
+                <Link href="/categories/menage" className="text-white/80 hover:text-secondary transition">
                   Ménage
                 </Link>
               </li>
               <li>
-                <Link href="/services/peinture" className="text-white/80 hover:text-secondary transition">
+                <Link href="/categories/peinture" className="text-white/80 hover:text-secondary transition">
                   Peinture
                 </Link>
               </li>
@@ -72,27 +72,27 @@ export default function Footer() {
             <h3 className="font-semibold text-lg mb-4">Villes</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/villes/dakar" className="text-white/80 hover:text-secondary transition">
+                <Link href="/prestataires?ville=dakar" className="text-white/80 hover:text-secondary transition">
                   Dakar
                 </Link>
               </li>
               <li>
-                <Link href="/villes/thies" className="text-white/80 hover:text-secondary transition">
+                <Link href="/prestataires?ville=thies" className="text-white/80 hover:text-secondary transition">
                   Thiès
                 </Link>
               </li>
               <li>
-                <Link href="/villes/saint-louis" className="text-white/80 hover:text-secondary transition">
+                <Link href="/prestataires?ville=saint-louis" className="text-white/80 hover:text-secondary transition">
                   Saint-Louis
                 </Link>
               </li>
               <li>
-                <Link href="/villes/kaolack" className="text-white/80 hover:text-secondary transition">
+                <Link href="/prestataires?ville=kaolack" className="text-white/80 hover:text-secondary transition">
                   Kaolack
                 </Link>
               </li>
               <li>
-                <Link href="/villes/ziguinchor" className="text-white/80 hover:text-secondary transition">
+                <Link href="/prestataires?ville=ziguinchor" className="text-white/80 hover:text-secondary transition">
                   Ziguinchor
                 </Link>
               </li>
@@ -139,6 +139,11 @@ export default function Footer() {
                 <li>
                   <Link href="/cgu" className="text-white/60 hover:text-secondary transition">
                     CGU
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/contact" className="text-white/60 hover:text-secondary transition">
+                    Contact
                   </Link>
                 </li>
               </ul>

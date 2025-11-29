@@ -96,8 +96,8 @@ export default function Confidentialite() {
                   réalisation du service (nom, téléphone, adresse)
                 </li>
                 <li>
-                  <strong>Les prestataires de paiement :</strong> Wave, Orange Money, Free Money 
-                  pour le traitement des transactions
+                  <strong>Les prestataires de paiement :</strong> Wave, Orange Money, Free Money, 
+                  PayDunya (cartes bancaires) pour le traitement des transactions
                 </li>
                 <li>
                   <strong>Les autorités :</strong> en cas d'obligation légale
