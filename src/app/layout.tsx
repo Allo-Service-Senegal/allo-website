@@ -7,16 +7,10 @@ import Footer from '@/components/layout/Footer'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Allo Service Sénégal | Trouvez les meilleurs artisans près de chez vous',
-  description: 'Plateforme de mise en relation entre clients et prestataires de services au Sénégal. Plomberie, électricité, ménage, peinture et plus encore.',
-  keywords: 'services, artisans, Sénégal, Dakar, plombier, électricien, ménage, prestataire',
-  openGraph: {
-    title: 'Allo Service Sénégal',
-    description: 'Trouvez les meilleurs artisans près de chez vous',
-    url: 'https://alloservicesenegal.com',
-    siteName: 'Allo Service Sénégal',
-    locale: 'fr_SN',
-    type: 'website',
+  title: 'Allo Service Sénégal - Trouvez des prestataires de confiance',
+  description: 'Marketplace de services au Sénégal. Plombiers, électriciens, ménage et plus. Des professionnels vérifiés à votre service.',
+  icons: {
+    icon: '/images/favicon.png',
   },
 }
 
@@ -29,7 +23,9 @@ export default function RootLayout({
     <html lang="fr">
       <body className={inter.className}>
         <Header />
-        <main>{children}</main>
+        <main className="min-h-screen">
+          {children}
+        </main>
         <Footer />
       </body>
     </html>
