@@ -321,13 +321,18 @@ export default function Prestataires() {
   )
 
   return (
-    <div className="bg-gray-50 min-h-screen py-8">
+    <div className="bg-gray-50 min-h-screen py-8 pb-16">
       <div className="container mx-auto px-4">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-primary mb-2">Nos Prestataires</h1>
             <p className="text-gray-600">Trouvez le prestataire idéal pour vos besoins</p>
+          </div>
+
+          {/* Espace Publicitaire */}
+          <div className="mb-8 bg-gradient-to-r from-gray-100 to-gray-200 rounded-xl p-6 text-center border-2 border-dashed border-gray-300">
+            <p className="text-gray-500 text-sm">Espace publicitaire</p>
           </div>
 
           {/* Bouton filtre mobile */}
