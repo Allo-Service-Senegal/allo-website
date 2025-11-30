@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Mail, ArrowRight, ArrowLeft, Shield, CheckCircle } from 'lucide-react'
+import { Mail, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react'
 
 export default function MotDePasseOubliePage() {
   const [email, setEmail] = useState('')
@@ -30,15 +30,9 @@ export default function MotDePasseOubliePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-8">
+    <div className="min-h-[60vh] flex items-center justify-center py-12 px-4">
       <div className="w-full max-w-md">
-        {/* Logo */}
-        <Link href="/" className="flex items-center justify-center mb-8">
-          <Shield className="w-10 h-10 text-secondary mr-2" />
-          <span className="text-2xl font-bold text-primary">Allo Service</span>
-        </Link>
-
-        <div className="bg-white rounded-2xl shadow-sm p-8">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
           {!sent ? (
             <>
               <Link
@@ -116,11 +110,6 @@ export default function MotDePasseOubliePage() {
             </div>
           )}
         </div>
-
-        {/* Footer */}
-        <p className="text-center text-sm text-gray-400 mt-8">
-          © 2025 Allo Service Sénégal. Tous droits réservés.
-        </p>
       </div>
     </div>
   )
