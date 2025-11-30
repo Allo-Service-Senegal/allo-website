@@ -44,13 +44,13 @@ export default function APropos() {
   return (
     <div className="bg-white">
       {/* Hero avec image de fond */}
-      <section className="relative bg-primary text-white py-20 overflow-hidden">
+      <section className="relative bg-primary text-white py-28 lg:py-36 overflow-hidden">
         {/* Image de fond */}
         <div 
-          className="absolute inset-0 bg-cover bg-center opacity-20"
-          style={{ backgroundImage: "url('/images/hero-image.jpg')" }}
+          className="absolute inset-0 bg-cover bg-center opacity-40"
+          style={{ backgroundImage: "url('/images/about-bg.jpg')" }}
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/90 to-primary/80" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/80 via-primary/70 to-primary/60" />
         
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-7xl mx-auto">
