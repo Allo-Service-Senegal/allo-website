@@ -4,478 +4,402 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { 
-  Mail, Lock, Eye, EyeOff, User, Phone, Building, 
-  UserPlus, ArrowLeft, ArrowRight, CheckCircle 
+  Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, 
+  ArrowLeft, Shield, UserCircle, Briefcase, Check
 } from 'lucide-react'
 
-type Step = 'type' | 'form' | 'success'
-type Role = 'CLIENT' | 'PRESTATAIRE'
-type TypeCompte = 'PARTICULIER' | 'ENTREPRISE'
+type UserType = 'client' | 'prestataire' | null
 
-export default function Inscription() {
+export default function InscriptionPage() {
   const router = useRouter()
-  const [step, setStep] = useState<Step>('type')
+  const [step, setStep] = useState(1)
+  const [userType, setUserType] = useState<UserType>(null)
   const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [acceptTerms, setAcceptTerms] = useState(false)
   
   const [formData, setFormData] = useState({
-    nom: '',
     prenom: '',
+    nom: '',
     email: '',
     telephone: '',
-    mot_de_passe: '',
-    confirm_password: '',
-    role: '' as Role,
-    type_compte: 'PARTICULIER' as TypeCompte,
-    nom_entreprise: '',
-    ninea: '',
-    accepte_cgu: false
+    password: '',
+    confirmPassword: ''
   })
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target
-    setFormData({
-      ...formData,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
-    })
-    setError('')
-  }
-
-  const handleRoleSelect = (role: Role) => {
-    setFormData({ ...formData, role })
-    setStep('form')
-  }
-
-  const validateForm = () => {
-    if (!formData.nom || !formData.prenom || !formData.email || !formData.telephone || !formData.mot_de_passe) {
-      setError('Veuillez remplir tous les champs obligatoires')
-      return false
-    }
-    if (formData.mot_de_passe.length < 6) {
-      setError('Le mot de passe doit contenir au moins 6 caractères')
-      return false
-    }
-    if (formData.mot_de_passe !== formData.confirm_password) {
-      setError('Les mots de passe ne correspondent pas')
-      return false
-    }
-    if (!formData.accepte_cgu) {
-      setError('Vous devez accepter les conditions générales d\'utilisation')
-      return false
-    }
-    if (formData.type_compte === 'ENTREPRISE' && !formData.nom_entreprise) {
-      setError('Veuillez saisir le nom de votre entreprise')
-      return false
-    }
-    return true
+  const handleSelectType = (type: UserType) => {
+    setUserType(type)
+    setStep(2)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    if (!validateForm()) return
-    
-    setIsLoading(true)
     setError('')
 
+    // Validations
+    if (formData.password !== formData.confirmPassword) {
+      setError('Les mots de passe ne correspondent pas')
+      return
+    }
+
+    if (formData.password.length < 8) {
+      setError('Le mot de passe doit contenir au moins 8 caractères')
+      return
+    }
+
+    if (!acceptTerms) {
+      setError('Veuillez accepter les conditions d\'utilisation')
+      return
+    }
+
+    setLoading(true)
+
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://allo-api-production.up.railway.app'
+      // TODO: Appel API réel
+      // const response = await authService.register({
+      //   ...formData,
+      //   role: userType
+      // })
       
-      const payload = {
-        nom: formData.nom,
-        prenom: formData.prenom,
-        email: formData.email,
-        telephone: formData.telephone,
-        mot_de_passe: formData.mot_de_passe,
-        role: formData.role,
-        type_compte: formData.type_compte,
-        nom_entreprise: formData.type_compte === 'ENTREPRISE' ? formData.nom_entreprise : null,
-        ninea: formData.type_compte === 'ENTREPRISE' ? formData.ninea : null
+      // Simulation
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      
+      // Redirection selon le type
+      if (userType === 'prestataire') {
+        router.push('/prestataire')
+      } else {
+        router.push('/client')
       }
-
-      const response = await fetch(`${API_URL}/api/auth/inscription`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.detail || 'Erreur lors de l\'inscription')
-      }
-
-      // Stocker le token et les infos utilisateur
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('user', JSON.stringify(data.user))
-
-      setStep('success')
-    } catch (err: any) {
-      setError(err.message || 'Une erreur est survenue')
+    } catch (err) {
+      setError('Une erreur est survenue. Veuillez réessayer.')
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
-  // Étape 1 : Choix du type de compte
-  if (step === 'type') {
-    return (
-      <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          <h2 className="text-center text-3xl font-bold text-gray-900">
-            Créer un compte
-          </h2>
-          <p className="mt-2 text-center text-gray-600">
-            Choisissez votre type de compte
-          </p>
-        </div>
-
-        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-lg">
-          <div className="grid sm:grid-cols-2 gap-4">
-            {/* Client */}
-            <button
-              onClick={() => handleRoleSelect('CLIENT')}
-              className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition border-2 border-transparent hover:border-secondary group"
-            >
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-secondary/20">
-                <User className="w-8 h-8 text-blue-600 group-hover:text-secondary" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Je suis client</h3>
-              <p className="text-gray-600 text-sm">
-                Je recherche des prestataires pour mes besoins en services
-              </p>
-            </button>
-
-            {/* Prestataire */}
-            <button
-              onClick={() => handleRoleSelect('PRESTATAIRE')}
-              className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition border-2 border-transparent hover:border-secondary group"
-            >
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-secondary/20">
-                <Building className="w-8 h-8 text-green-600 group-hover:text-secondary" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Je suis prestataire</h3>
-              <p className="text-gray-600 text-sm">
-                Je propose mes services et veux développer ma clientèle
-              </p>
-            </button>
-          </div>
-
-          <p className="mt-6 text-center text-gray-600">
-            Déjà un compte ?{' '}
-            <Link href="/connexion" className="text-secondary hover:underline font-medium">
-              Se connecter
-            </Link>
-          </p>
-        </div>
-      </div>
-    )
-  }
-
-  // Étape 3 : Succès
-  if (step === 'success') {
-    return (
-      <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="bg-white py-8 px-4 shadow-lg rounded-xl sm:px-10 text-center">
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle className="w-10 h-10 text-green-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Inscription réussie !
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Bienvenue sur Allo Service Sénégal. Votre compte a été créé avec succès.
-            </p>
-            <button
-              onClick={() => router.push(formData.role === 'PRESTATAIRE' ? '/prestataire' : '/client')}
-              className="w-full bg-primary text-white py-3 px-4 rounded-lg hover:bg-primary/90 transition font-medium"
-            >
-              Accéder à mon espace
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // Étape 2 : Formulaire d'inscription
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-lg">
-        <h2 className="text-center text-3xl font-bold text-gray-900">
-          {formData.role === 'PRESTATAIRE' ? 'Inscription Prestataire' : 'Inscription Client'}
-        </h2>
-        <p className="mt-2 text-center text-gray-600">
-          Remplissez vos informations
-        </p>
-      </div>
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Partie gauche - Formulaire */}
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="w-full max-w-md">
+          {/* Logo */}
+          <Link href="/" className="flex items-center justify-center mb-8">
+            <Shield className="w-10 h-10 text-secondary mr-2" />
+            <span className="text-2xl font-bold text-primary">Allo Service</span>
+          </Link>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-lg">
-        <div className="bg-white py-8 px-4 shadow-lg rounded-xl sm:px-10">
-          {/* Bouton retour */}
-          <button
-            onClick={() => setStep('type')}
-            className="flex items-center text-gray-600 hover:text-primary mb-6"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Changer de type de compte
-          </button>
-
-          {/* Message d'erreur */}
-          {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Type de compte (Particulier / Entreprise) */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Type de compte
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, type_compte: 'PARTICULIER' })}
-                  className={`p-3 rounded-lg border-2 text-sm font-medium transition ${
-                    formData.type_compte === 'PARTICULIER'
-                      ? 'border-secondary bg-secondary/10 text-secondary'
-                      : 'border-gray-300 text-gray-700 hover:border-gray-400'
-                  }`}
-                >
-                  Particulier
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, type_compte: 'ENTREPRISE' })}
-                  className={`p-3 rounded-lg border-2 text-sm font-medium transition ${
-                    formData.type_compte === 'ENTREPRISE'
-                      ? 'border-secondary bg-secondary/10 text-secondary'
-                      : 'border-gray-300 text-gray-700 hover:border-gray-400'
-                  }`}
-                >
-                  Entreprise
-                </button>
-              </div>
-            </div>
-
-            {/* Nom et Prénom */}
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="prenom" className="block text-sm font-medium text-gray-700 mb-2">
-                  Prénom *
-                </label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    id="prenom"
-                    name="prenom"
-                    type="text"
-                    required
-                    value={formData.prenom}
-                    onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
-                    placeholder="Votre prénom"
-                  />
+          <div className="bg-white rounded-2xl shadow-sm p-8">
+            {/* Étape 1: Choix du type de compte */}
+            {step === 1 && (
+              <>
+                <div className="text-center mb-8">
+                  <h1 className="text-2xl font-bold text-gray-900 mb-2">Créer un compte</h1>
+                  <p className="text-gray-500">Choisissez votre type de compte</p>
                 </div>
-              </div>
-              <div>
-                <label htmlFor="nom" className="block text-sm font-medium text-gray-700 mb-2">
-                  Nom *
-                </label>
-                <input
-                  id="nom"
-                  name="nom"
-                  type="text"
-                  required
-                  value={formData.nom}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
-                  placeholder="Votre nom"
-                />
-              </div>
-            </div>
 
-            {/* Champs entreprise */}
-            {formData.type_compte === 'ENTREPRISE' && (
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="nom_entreprise" className="block text-sm font-medium text-gray-700 mb-2">
-                    Nom entreprise *
-                  </label>
-                  <div className="relative">
-                    <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                      id="nom_entreprise"
-                      name="nom_entreprise"
-                      type="text"
-                      value={formData.nom_entreprise}
-                      onChange={handleChange}
-                      className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
-                      placeholder="Nom de l'entreprise"
-                    />
-                  </div>
+                <div className="space-y-4">
+                  <button
+                    onClick={() => handleSelectType('client')}
+                    className="w-full p-6 border-2 border-gray-200 rounded-xl hover:border-secondary hover:bg-secondary/5 transition text-left group"
+                  >
+                    <div className="flex items-start">
+                      <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-secondary/20 transition">
+                        <UserCircle className="w-6 h-6 text-blue-600 group-hover:text-secondary" />
+                      </div>
+                      <div className="ml-4 flex-1">
+                        <h3 className="font-semibold text-gray-900 mb-1">Je suis un client</h3>
+                        <p className="text-sm text-gray-500">
+                          Je cherche des prestataires pour mes besoins de services à domicile
+                        </p>
+                      </div>
+                      <ArrowRight className="w-5 h-5 text-gray-300 group-hover:text-secondary transition" />
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => handleSelectType('prestataire')}
+                    className="w-full p-6 border-2 border-gray-200 rounded-xl hover:border-secondary hover:bg-secondary/5 transition text-left group"
+                  >
+                    <div className="flex items-start">
+                      <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center group-hover:bg-secondary/20 transition">
+                        <Briefcase className="w-6 h-6 text-green-600 group-hover:text-secondary" />
+                      </div>
+                      <div className="ml-4 flex-1">
+                        <h3 className="font-semibold text-gray-900 mb-1">Je suis un prestataire</h3>
+                        <p className="text-sm text-gray-500">
+                          Je propose mes services et souhaite trouver de nouveaux clients
+                        </p>
+                      </div>
+                      <ArrowRight className="w-5 h-5 text-gray-300 group-hover:text-secondary transition" />
+                    </div>
+                  </button>
                 </div>
-                <div>
-                  <label htmlFor="ninea" className="block text-sm font-medium text-gray-700 mb-2">
-                    NINEA (optionnel)
-                  </label>
-                  <input
-                    id="ninea"
-                    name="ninea"
-                    type="text"
-                    value={formData.ninea}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
-                    placeholder="Numéro NINEA"
-                  />
+
+                <div className="mt-8 text-center">
+                  <p className="text-gray-500">
+                    Déjà un compte ?{' '}
+                    <Link href="/connexion" className="text-secondary font-medium hover:underline">
+                      Se connecter
+                    </Link>
+                  </p>
                 </div>
-              </div>
+              </>
             )}
 
-            {/* Email */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Adresse email *
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
-                  placeholder="votre@email.com"
-                />
-              </div>
-            </div>
-
-            {/* Téléphone */}
-            <div>
-              <label htmlFor="telephone" className="block text-sm font-medium text-gray-700 mb-2">
-                Numéro de téléphone *
-              </label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  id="telephone"
-                  name="telephone"
-                  type="tel"
-                  required
-                  value={formData.telephone}
-                  onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
-                  placeholder="77 123 45 67"
-                />
-              </div>
-            </div>
-
-            {/* Mot de passe */}
-            <div>
-              <label htmlFor="mot_de_passe" className="block text-sm font-medium text-gray-700 mb-2">
-                Mot de passe *
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  id="mot_de_passe"
-                  name="mot_de_passe"
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  value={formData.mot_de_passe}
-                  onChange={handleChange}
-                  className="w-full pl-10 pr-12 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
-                  placeholder="Minimum 6 caractères"
-                />
+            {/* Étape 2: Formulaire d'inscription */}
+            {step === 2 && (
+              <>
                 <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  onClick={() => setStep(1)}
+                  className="flex items-center text-gray-500 hover:text-gray-700 mb-6"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Retour
                 </button>
-              </div>
-            </div>
 
-            {/* Confirmer mot de passe */}
-            <div>
-              <label htmlFor="confirm_password" className="block text-sm font-medium text-gray-700 mb-2">
-                Confirmer le mot de passe *
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  id="confirm_password"
-                  name="confirm_password"
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  value={formData.confirm_password}
-                  onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
-                  placeholder="Confirmer votre mot de passe"
-                />
-              </div>
-            </div>
+                <div className="text-center mb-8">
+                  <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium mb-4 ${
+                    userType === 'client' 
+                      ? 'bg-blue-100 text-blue-700' 
+                      : 'bg-green-100 text-green-700'
+                  }`}>
+                    {userType === 'client' ? (
+                      <><UserCircle className="w-4 h-4 mr-1" /> Compte Client</>
+                    ) : (
+                      <><Briefcase className="w-4 h-4 mr-1" /> Compte Prestataire</>
+                    )}
+                  </div>
+                  <h1 className="text-2xl font-bold text-gray-900 mb-2">Vos informations</h1>
+                  <p className="text-gray-500">Remplissez le formulaire ci-dessous</p>
+                </div>
 
-            {/* CGU */}
-            <div className="flex items-start">
-              <input
-                id="accepte_cgu"
-                name="accepte_cgu"
-                type="checkbox"
-                checked={formData.accepte_cgu}
-                onChange={handleChange}
-                className="h-4 w-4 mt-1 text-secondary focus:ring-secondary border-gray-300 rounded"
-              />
-              <label htmlFor="accepte_cgu" className="ml-2 text-sm text-gray-600">
-                J'accepte les{' '}
-                <Link href="/cgu" target="_blank" className="text-secondary hover:underline">
-                  conditions générales d'utilisation
-                </Link>{' '}
-                et la{' '}
-                <Link href="/confidentialite" target="_blank" className="text-secondary hover:underline">
-                  politique de confidentialité
-                </Link>
-              </label>
-            </div>
+                {error && (
+                  <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                    {error}
+                  </div>
+                )}
 
-            {/* Bouton inscription */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full flex items-center justify-center bg-primary text-white py-3 px-4 rounded-lg hover:bg-primary/90 transition disabled:opacity-70 disabled:cursor-not-allowed font-medium"
-            >
-              {isLoading ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Inscription en cours...
-                </>
-              ) : (
-                <>
-                  <UserPlus className="w-5 h-5 mr-2" />
-                  S'inscrire
-                </>
-              )}
-            </button>
-          </form>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Prénom *
+                      </label>
+                      <div className="relative">
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <input
+                          type="text"
+                          value={formData.prenom}
+                          onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
+                          className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
+                          placeholder="Prénom"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nom *
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.nom}
+                        onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
+                        placeholder="Nom"
+                        required
+                      />
+                    </div>
+                  </div>
 
-          <p className="mt-6 text-center text-gray-600 text-sm">
-            Déjà un compte ?{' '}
-            <Link href="/connexion" className="text-secondary hover:underline font-medium">
-              Se connecter
-            </Link>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Email *
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
+                        placeholder="votre@email.com"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Téléphone *
+                    </label>
+                    <div className="relative">
+                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                        type="tel"
+                        value={formData.telephone}
+                        onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
+                        className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
+                        placeholder="+221 77 000 00 00"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Mot de passe *
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        className="w-full pl-12 pr-12 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
+                        placeholder="Minimum 8 caractères"
+                        required
+                        minLength={8}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Confirmer le mot de passe *
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={formData.confirmPassword}
+                        onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                        className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
+                        placeholder="Confirmez votre mot de passe"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <label className="flex items-start cursor-pointer pt-2">
+                    <input
+                      type="checkbox"
+                      checked={acceptTerms}
+                      onChange={(e) => setAcceptTerms(e.target.checked)}
+                      className="w-4 h-4 mt-1 text-secondary focus:ring-secondary border-gray-300 rounded"
+                    />
+                    <span className="ml-2 text-sm text-gray-600">
+                      J'accepte les{' '}
+                      <Link href="/cgu" className="text-secondary hover:underline">
+                        conditions générales d'utilisation
+                      </Link>
+                      {' '}et la{' '}
+                      <Link href="/confidentialite" className="text-secondary hover:underline">
+                        politique de confidentialité
+                      </Link>
+                    </span>
+                  </label>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-3 bg-primary text-white font-semibold rounded-xl hover:bg-primary/90 transition flex items-center justify-center disabled:opacity-50 mt-4"
+                  >
+                    {loading ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        Créer mon compte
+                        <ArrowRight className="w-5 h-5 ml-2" />
+                      </>
+                    )}
+                  </button>
+                </form>
+
+                <div className="mt-6 text-center">
+                  <p className="text-gray-500">
+                    Déjà un compte ?{' '}
+                    <Link href="/connexion" className="text-secondary font-medium hover:underline">
+                      Se connecter
+                    </Link>
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Footer */}
+          <p className="text-center text-sm text-gray-400 mt-8">
+            © 2025 Allo Service Sénégal. Tous droits réservés.
           </p>
+        </div>
+      </div>
+
+      {/* Partie droite - Visuel */}
+      <div className="hidden lg:flex lg:flex-1 bg-primary items-center justify-center p-12">
+        <div className="max-w-lg text-center text-white">
+          <h2 className="text-4xl font-bold mb-6">
+            {userType === 'prestataire' 
+              ? 'Développez votre activité avec Allo Service'
+              : 'Rejoignez la communauté Allo Service'
+            }
+          </h2>
+          <p className="text-xl text-white/80 mb-8">
+            {userType === 'prestataire'
+              ? 'Trouvez de nouveaux clients, gérez vos demandes et développez votre réputation.'
+              : 'Trouvez des prestataires de confiance pour tous vos besoins de services à domicile.'
+            }
+          </p>
+          
+          <div className="space-y-4 text-left bg-white/10 rounded-xl p-6">
+            {userType === 'prestataire' ? (
+              <>
+                <div className="flex items-center">
+                  <Check className="w-5 h-5 text-secondary mr-3 flex-shrink-0" />
+                  <span>Créez votre profil professionnel</span>
+                </div>
+                <div className="flex items-center">
+                  <Check className="w-5 h-5 text-secondary mr-3 flex-shrink-0" />
+                  <span>Recevez des demandes de clients</span>
+                </div>
+                <div className="flex items-center">
+                  <Check className="w-5 h-5 text-secondary mr-3 flex-shrink-0" />
+                  <span>Gérez vos services et tarifs</span>
+                </div>
+                <div className="flex items-center">
+                  <Check className="w-5 h-5 text-secondary mr-3 flex-shrink-0" />
+                  <span>Collectez des avis clients</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center">
+                  <Check className="w-5 h-5 text-secondary mr-3 flex-shrink-0" />
+                  <span>Accès à des prestataires vérifiés</span>
+                </div>
+                <div className="flex items-center">
+                  <Check className="w-5 h-5 text-secondary mr-3 flex-shrink-0" />
+                  <span>Demandez des devis gratuitement</span>
+                </div>
+                <div className="flex items-center">
+                  <Check className="w-5 h-5 text-secondary mr-3 flex-shrink-0" />
+                  <span>Consultez les avis clients</span>
+                </div>
+                <div className="flex items-center">
+                  <Check className="w-5 h-5 text-secondary mr-3 flex-shrink-0" />
+                  <span>Paiement sécurisé</span>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>
