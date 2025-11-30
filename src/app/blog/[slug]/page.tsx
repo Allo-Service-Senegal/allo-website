@@ -196,7 +196,7 @@ export default function ArticleDetail() {
       {/* Header avec image */}
       <div className="bg-primary text-white py-12">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-5xl mx-auto">
             {/* Breadcrumb */}
             <div className="flex items-center text-sm text-white/70 mb-6">
               <Link href="/blog" className="hover:text-white flex items-center">
@@ -240,16 +240,44 @@ export default function ArticleDetail() {
       </div>
 
       <div className="container mx-auto px-4 py-12">
-        <div className="max-w-4xl mx-auto">
-          <div className="grid lg:grid-cols-4 gap-8">
-            {/* Sidebar gauche - Partage */}
-            <aside className="lg:col-span-1 order-2 lg:order-1">
-              <div className="sticky top-24">
-                <p className="text-sm font-medium text-gray-500 mb-3">Partager</p>
-                <div className="flex lg:flex-col gap-2">
+        <div className="max-w-5xl mx-auto">
+          {/* Contenu principal */}
+          <article>
+            <div className="bg-white rounded-xl shadow-sm p-6 lg:p-10">
+              {/* Contenu de l'article */}
+              <div 
+                className="prose prose-lg max-w-none
+                  prose-headings:text-primary prose-headings:font-bold
+                  prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4
+                  prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3
+                  prose-p:text-gray-700 prose-p:leading-relaxed
+                  prose-ul:text-gray-700 prose-li:my-1
+                  prose-a:text-secondary prose-a:no-underline hover:prose-a:underline"
+                dangerouslySetInnerHTML={{ __html: article.contenu }}
+              />
+
+              {/* Tags */}
+              <div className="mt-10 pt-6 border-t">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Tag className="w-4 h-4 text-gray-400" />
+                  {article.tags.map((tag: string) => (
+                    <span 
+                      key={tag}
+                      className="bg-gray-100 text-gray-600 text-sm px-3 py-1 rounded-full"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Partage */}
+              <div className="mt-8 pt-6 border-t">
+                <p className="text-sm font-medium text-gray-500 mb-3">Partager cet article</p>
+                <div className="flex gap-2">
                   <button 
                     onClick={handleShare}
-                    className="p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition text-gray-600 hover:text-primary"
+                    className="p-3 bg-gray-100 rounded-lg hover:bg-gray-200 transition text-gray-600 hover:text-primary"
                     title={copied ? 'Lien copié !' : 'Copier le lien'}
                   >
                     <Share2 className="w-5 h-5" />
@@ -258,7 +286,7 @@ export default function ArticleDetail() {
                     href={`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition text-gray-600 hover:text-blue-600"
+                    className="p-3 bg-gray-100 rounded-lg hover:bg-gray-200 transition text-gray-600 hover:text-blue-600"
                   >
                     <Facebook className="w-5 h-5" />
                   </a>
@@ -266,7 +294,7 @@ export default function ArticleDetail() {
                     href={`https://twitter.com/intent/tweet?url=${shareUrl}&text=${article.titre}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition text-gray-600 hover:text-sky-500"
+                    className="p-3 bg-gray-100 rounded-lg hover:bg-gray-200 transition text-gray-600 hover:text-sky-500"
                   >
                     <Twitter className="w-5 h-5" />
                   </a>
@@ -274,97 +302,65 @@ export default function ArticleDetail() {
                     href={`https://www.linkedin.com/shareArticle?mini=true&url=${shareUrl}&title=${article.titre}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition text-gray-600 hover:text-blue-700"
+                    className="p-3 bg-gray-100 rounded-lg hover:bg-gray-200 transition text-gray-600 hover:text-blue-700"
                   >
                     <Linkedin className="w-5 h-5" />
                   </a>
                 </div>
               </div>
-            </aside>
 
-            {/* Contenu principal */}
-            <article className="lg:col-span-3 order-1 lg:order-2">
-              <div className="bg-white rounded-xl shadow-sm p-6 lg:p-10">
-                {/* Contenu de l'article */}
-                <div 
-                  className="prose prose-lg max-w-none
-                    prose-headings:text-primary prose-headings:font-bold
-                    prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4
-                    prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3
-                    prose-p:text-gray-700 prose-p:leading-relaxed
-                    prose-ul:text-gray-700 prose-li:my-1
-                    prose-a:text-secondary prose-a:no-underline hover:prose-a:underline"
-                  dangerouslySetInnerHTML={{ __html: article.contenu }}
-                />
-
-                {/* Tags */}
-                <div className="mt-10 pt-6 border-t">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Tag className="w-4 h-4 text-gray-400" />
-                    {article.tags.map((tag: string) => (
-                      <span 
-                        key={tag}
-                        className="bg-gray-100 text-gray-600 text-sm px-3 py-1 rounded-full"
-                      >
-                        {tag}
-                      </span>
-                    ))}
+              {/* Auteur */}
+              <div className="mt-8 p-6 bg-gray-50 rounded-xl">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                    <span className="font-bold text-primary">{article.auteur.avatar}</span>
                   </div>
-                </div>
-
-                {/* Auteur */}
-                <div className="mt-8 p-6 bg-gray-50 rounded-xl">
-                  <div className="flex items-center">
-                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                      <span className="font-bold text-primary">{article.auteur.avatar}</span>
-                    </div>
-                    <div className="ml-4">
-                      <p className="font-semibold text-gray-900">{article.auteur.nom}</p>
-                      <p className="text-sm text-gray-500">Publié le {article.date}</p>
-                    </div>
+                  <div className="ml-4">
+                    <p className="font-semibold text-gray-900">{article.auteur.nom}</p>
+                    <p className="text-sm text-gray-500">Publié le {article.date}</p>
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Articles connexes */}
-              <div className="mt-12">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Articles connexes</h2>
-                <div className="grid md:grid-cols-2 gap-6">
-                  {related.map(item => (
-                    <Link 
-                      key={item.slug}
-                      href={`/blog/${item.slug}`}
-                      className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition group"
-                    >
-                      <span className="text-secondary text-sm font-medium">
-                        {item.categorie.charAt(0).toUpperCase() + item.categorie.slice(1)}
-                      </span>
-                      <h3 className="font-semibold text-gray-900 mt-2 group-hover:text-primary transition">
-                        {item.titre}
-                      </h3>
-                    </Link>
-                  ))}
-                </div>
+            {/* Articles connexes */}
+            <div className="mt-12">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Articles connexes</h2>
+              <div className="grid md:grid-cols-2 gap-6">
+                {related.map(item => (
+                  <Link 
+                    key={item.slug}
+                    href={`/blog/${item.slug}`}
+                    className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition group"
+                  >
+                    <span className="text-secondary text-sm font-medium">
+                      {item.categorie.charAt(0).toUpperCase() + item.categorie.slice(1)}
+                    </span>
+                    <h3 className="font-semibold text-gray-900 mt-2 group-hover:text-primary transition">
+                      {item.titre}
+                    </h3>
+                  </Link>
+                ))}
               </div>
+            </div>
 
-              {/* CTA */}
-              <div className="mt-12 bg-primary rounded-xl p-8 text-center text-white">
-                <h2 className="text-2xl font-bold mb-4">
-                  Besoin d'un prestataire ?
-                </h2>
-                <p className="text-white/80 mb-6">
-                  Trouvez des professionnels vérifiés près de chez vous
-                </p>
-                <Link 
-                  href="/services"
-                  className="inline-flex items-center bg-secondary text-white px-6 py-3 rounded-lg hover:bg-secondary/90 transition font-medium"
-                >
-                  Trouver un prestataire
-                  <ChevronRight className="w-5 h-5 ml-2" />
-                </Link>
-              </div>
-            </article>
-          </div>
+            {/* CTA */}
+            <div className="mt-12 bg-primary rounded-xl p-8 text-center text-white">
+              <h2 className="text-2xl font-bold mb-4">
+                Besoin d'un prestataire ?
+              </h2>
+              <p className="text-white/80 mb-6">
+                Trouvez des professionnels vérifiés près de chez vous
+              </p>
+              <Link 
+                href="/services"
+                className="inline-flex items-center bg-secondary text-white px-6 py-3 rounded-lg hover:bg-secondary/90 transition font-medium"
+              >
+                Trouver un prestataire
+                <ChevronRight className="w-5 h-5 ml-2" />
+              </Link>
+            </div>
+          </article>
         </div>
       </div>
     </div>
