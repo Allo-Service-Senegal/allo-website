@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Mail, Phone, MapPin, Send, Clock, MessageCircle } from 'lucide-react'
+import { Mail, Phone, MapPin, Send, Clock, MessageCircle, AlertCircle } from 'lucide-react'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://allo-api-production.up.railway.app'
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -13,6 +15,7 @@ export default function Contact() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [error, setError] = useState('')
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
@@ -24,19 +27,36 @@ export default function Contact() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
+    setError('')
     
-    // Simulation d'envoi
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
-    setIsSubmitting(false)
-    setSubmitted(true)
-    setFormData({
-      nom: '',
-      email: '',
-      telephone: '',
-      sujet: '',
-      message: ''
-    })
+    try {
+      const response = await fetch(`${API_URL}/api/contact`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Une erreur est survenue')
+      }
+
+      setSubmitted(true)
+      setFormData({
+        nom: '',
+        email: '',
+        telephone: '',
+        sujet: '',
+        message: ''
+      })
+    } catch (err: any) {
+      setError(err.message || 'Une erreur est survenue lors de l\'envoi')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -155,6 +175,13 @@ export default function Contact() {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-6">
+                  {error && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start">
+                      <AlertCircle className="w-5 h-5 text-red-500 mr-3 flex-shrink-0 mt-0.5" />
+                      <p className="text-red-700 text-sm">{error}</p>
+                    </div>
+                  )}
+
                   <div className="grid sm:grid-cols-2 gap-6">
                     {/* Nom */}
                     <div>
@@ -222,12 +249,12 @@ export default function Contact() {
                         className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent bg-white"
                       >
                         <option value="">Sélectionnez un sujet</option>
-                        <option value="question">Question générale</option>
-                        <option value="client">Je suis client</option>
-                        <option value="prestataire">Je suis prestataire</option>
-                        <option value="partenariat">Partenariat</option>
-                        <option value="reclamation">Réclamation</option>
-                        <option value="autre">Autre</option>
+                        <option value="Question générale">Question générale</option>
+                        <option value="Je suis client">Je suis client</option>
+                        <option value="Je suis prestataire">Je suis prestataire</option>
+                        <option value="Partenariat">Partenariat</option>
+                        <option value="Réclamation">Réclamation</option>
+                        <option value="Autre">Autre</option>
                       </select>
                     </div>
                   </div>
