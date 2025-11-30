@@ -3,8 +3,6 @@
 import { useState } from 'react'
 import { Mail, Phone, MapPin, Send, Clock, MessageCircle, AlertCircle } from 'lucide-react'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://allo-api-production.up.railway.app'
-
 export default function Contact() {
   const [formData, setFormData] = useState({
     nom: '',
@@ -30,7 +28,7 @@ export default function Contact() {
     setError('')
     
     try {
-      const response = await fetch(`${API_URL}/api/contact`, {
+      const response = await fetch('https://allo-api-production.up.railway.app/api/contact', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -311,10 +309,10 @@ export default function Contact() {
           <div className="grid md:grid-cols-2 gap-6">
             <div className="bg-white rounded-xl shadow-sm p-6">
               <h3 className="font-semibold text-gray-900 mb-2">
-                Comment m'inscrire comme prestataire ?
+                Comment m&apos;inscrire comme prestataire ?
               </h3>
               <p className="text-gray-600 text-sm">
-                Cliquez sur "S'inscrire", choisissez "Prestataire", remplissez vos informations 
+                Cliquez sur &quot;S&apos;inscrire&quot;, choisissez &quot;Prestataire&quot;, remplissez vos informations 
                 et commencez à proposer vos services.
               </p>
             </div>
@@ -341,7 +339,7 @@ export default function Contact() {
                 Les prestataires sont-ils vérifiés ?
               </h3>
               <p className="text-gray-600 text-sm">
-                Oui, nous vérifions l'identité des prestataires. Les badges "vérifié" 
+                Oui, nous vérifions l&apos;identité des prestataires. Les badges &quot;vérifié&quot; 
                 indiquent les profils ayant passé notre processus de vérification.
               </p>
             </div>
