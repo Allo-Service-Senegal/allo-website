@@ -2,12 +2,14 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Mail, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react'
+import { Mail, ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react'
+
+const API_URL = 'https://allo-api-production.up.railway.app'
 
 export default function MotDePasseOubliePage() {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
-  const [sent, setSent] = useState(false)
+  const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -16,14 +18,23 @@ export default function MotDePasseOubliePage() {
     setLoading(true)
 
     try {
-      // TODO: Appel API réel
-      // await authService.resetPassword(email)
-      
-      // Simulation
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      setSent(true)
-    } catch (err) {
-      setError('Une erreur est survenue. Veuillez réessayer.')
+      const response = await fetch(`${API_URL}/api/auth/mot-de-passe-oublie`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Une erreur est survenue')
+      }
+
+      setSuccess(true)
+    } catch (err: any) {
+      setError(err.message || 'Une erreur est survenue')
     } finally {
       setLoading(false)
     }
@@ -33,20 +44,33 @@ export default function MotDePasseOubliePage() {
     <div className="min-h-[60vh] flex items-center justify-center py-12 px-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-          {!sent ? (
-            <>
-              <Link
-                href="/connexion"
-                className="flex items-center text-gray-500 hover:text-gray-700 mb-6"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Retour à la connexion
-              </Link>
+          <Link
+            href="/connexion"
+            className="flex items-center text-gray-500 hover:text-gray-700 mb-6"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Retour à la connexion
+          </Link>
 
+          {success ? (
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">Email envoyé !</h1>
+              <p className="text-gray-500 mb-6">
+                Si un compte existe avec cette adresse email, vous recevrez un lien pour réinitialiser votre mot de passe.
+              </p>
+              <p className="text-sm text-gray-400">
+                Pensez à vérifier vos spams si vous ne voyez pas l&apos;email.
+              </p>
+            </div>
+          ) : (
+            <>
               <div className="text-center mb-8">
                 <h1 className="text-2xl font-bold text-gray-900 mb-2">Mot de passe oublié ?</h1>
                 <p className="text-gray-500">
-                  Entrez votre email et nous vous enverrons un lien pour réinitialiser votre mot de passe.
+                  Entrez votre email pour recevoir un lien de réinitialisation
                 </p>
               </div>
 
@@ -90,24 +114,6 @@ export default function MotDePasseOubliePage() {
                 </button>
               </form>
             </>
-          ) : (
-            <div className="text-center py-8">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <CheckCircle className="w-8 h-8 text-green-600" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Email envoyé !</h2>
-              <p className="text-gray-500 mb-6">
-                Nous avons envoyé un lien de réinitialisation à <strong>{email}</strong>. 
-                Vérifiez votre boîte mail (et vos spams).
-              </p>
-              <Link
-                href="/connexion"
-                className="inline-flex items-center text-secondary font-medium hover:underline"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Retour à la connexion
-              </Link>
-            </div>
           )}
         </div>
       </div>

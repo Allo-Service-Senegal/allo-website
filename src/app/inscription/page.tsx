@@ -9,6 +9,8 @@ import {
   Check, Shield, Star, MessageSquare, CreditCard
 } from 'lucide-react'
 
+const API_URL = 'https://allo-api-production.up.railway.app'
+
 type UserType = 'client' | 'prestataire' | null
 type PrestataireType = 'particulier' | 'entreprise' | null
 
@@ -82,24 +84,42 @@ export default function InscriptionPage() {
     setLoading(true)
 
     try {
-      // TODO: Appel API réel
-      // const response = await authService.register({
-      //   ...formData,
-      //   role: userType,
-      //   type_prestataire: prestataireType
-      // })
-      
-      // Simulation
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      
+      const response = await fetch(`${API_URL}/api/auth/inscription`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nom: formData.nom,
+          prenom: formData.prenom,
+          email: formData.email,
+          telephone: formData.telephone,
+          mot_de_passe: formData.password,
+          role: userType === 'prestataire' ? 'PRESTATAIRE' : 'CLIENT',
+          type_compte: prestataireType === 'entreprise' ? 'ENTREPRISE' : 'PARTICULIER',
+          nom_entreprise: prestataireType === 'entreprise' ? formData.nomEntreprise : null,
+          ninea: prestataireType === 'entreprise' ? formData.ninea : null
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Une erreur est survenue')
+      }
+
+      // Stocker le token et les infos utilisateur
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('user', JSON.stringify(data.user))
+
       // Redirection selon le type
       if (userType === 'prestataire') {
         router.push('/prestataire')
       } else {
         router.push('/client')
       }
-    } catch (err) {
-      setError('Une erreur est survenue. Veuillez réessayer.')
+    } catch (err: any) {
+      setError(err.message || 'Une erreur est survenue. Veuillez réessayer.')
     } finally {
       setLoading(false)
     }
@@ -212,7 +232,7 @@ export default function InscriptionPage() {
                     <div className="ml-4 flex-1">
                       <h3 className="font-semibold text-gray-900 mb-1">Particulier</h3>
                       <p className="text-sm text-gray-500">
-                        Je travaille en tant qu'indépendant ou auto-entrepreneur
+                        Je propose mes services en tant qu&apos;indépendant
                       </p>
                     </div>
                     <ArrowRight className="w-5 h-5 text-gray-300 group-hover:text-secondary transition" />
@@ -230,7 +250,7 @@ export default function InscriptionPage() {
                     <div className="ml-4 flex-1">
                       <h3 className="font-semibold text-gray-900 mb-1">Entreprise</h3>
                       <p className="text-sm text-gray-500">
-                        Je représente une société ou une entreprise enregistrée
+                        Je représente une entreprise de services
                       </p>
                     </div>
                     <ArrowRight className="w-5 h-5 text-gray-300 group-hover:text-secondary transition" />
@@ -252,34 +272,24 @@ export default function InscriptionPage() {
               </button>
 
               <div className="text-center mb-6">
-                <div className="flex justify-center gap-2 mb-4">
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                    userType === 'client' 
-                      ? 'bg-blue-100 text-blue-700' 
-                      : 'bg-green-100 text-green-700'
-                  }`}>
-                    {userType === 'client' ? (
-                      <><UserCircle className="w-4 h-4 mr-1" /> Client</>
-                    ) : (
-                      <><Briefcase className="w-4 h-4 mr-1" /> Prestataire</>
-                    )}
-                  </span>
-                  {prestataireType && (
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                      prestataireType === 'particulier'
-                        ? 'bg-purple-100 text-purple-700'
-                        : 'bg-orange-100 text-orange-700'
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <h1 className="text-2xl font-bold text-gray-900">Inscription</h1>
+                  {userType === 'prestataire' && prestataireType && (
+                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                      prestataireType === 'entreprise' 
+                        ? 'bg-orange-100 text-orange-700' 
+                        : 'bg-purple-100 text-purple-700'
                     }`}>
-                      {prestataireType === 'particulier' ? (
-                        <><UserCheck className="w-4 h-4 mr-1" /> Particulier</>
-                      ) : (
-                        <><Building2 className="w-4 h-4 mr-1" /> Entreprise</>
-                      )}
+                      {prestataireType === 'entreprise' ? 'Entreprise' : 'Particulier'}
                     </span>
                   )}
                 </div>
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">Vos informations</h1>
-                <p className="text-gray-500">Remplissez le formulaire ci-dessous</p>
+                <p className="text-gray-500">
+                  {userType === 'prestataire' 
+                    ? 'Créez votre compte prestataire' 
+                    : 'Créez votre compte client'
+                  }
+                </p>
               </div>
 
               {error && (
@@ -294,7 +304,7 @@ export default function InscriptionPage() {
                   <>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Nom de l'entreprise *
+                        Nom de l&apos;entreprise *
                       </label>
                       <div className="relative">
                         <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -308,9 +318,10 @@ export default function InscriptionPage() {
                         />
                       </div>
                     </div>
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        NINEA (optionnel)
+                        NINEA <span className="text-gray-400 font-normal">(optionnel)</span>
                       </label>
                       <input
                         type="text"
@@ -383,7 +394,7 @@ export default function InscriptionPage() {
                       value={formData.telephone}
                       onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
                       className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
-                      placeholder="+221 77 000 00 00"
+                      placeholder="77 000 00 00"
                       required
                     />
                   </div>
@@ -439,9 +450,9 @@ export default function InscriptionPage() {
                     className="w-4 h-4 mt-1 text-secondary focus:ring-secondary border-gray-300 rounded"
                   />
                   <span className="ml-2 text-sm text-gray-600">
-                    J'accepte les{' '}
+                    J&apos;accepte les{' '}
                     <Link href="/cgu" className="text-secondary hover:underline">
-                      conditions générales d'utilisation
+                      conditions générales d&apos;utilisation
                     </Link>
                     {' '}et la{' '}
                     <Link href="/confidentialite" className="text-secondary hover:underline">

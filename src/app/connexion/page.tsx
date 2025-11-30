@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react'
 
+const API_URL = 'https://allo-api-production.up.railway.app'
+
 export default function ConnexionPage() {
   const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
@@ -22,16 +24,38 @@ export default function ConnexionPage() {
     setLoading(true)
 
     try {
-      // TODO: Appel API réel
-      // const response = await authService.login(formData)
-      
-      // Simulation pour le moment
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      
-      // Redirection selon le rôle (à adapter avec l'API)
-      router.push('/')
-    } catch (err) {
-      setError('Email ou mot de passe incorrect')
+      const response = await fetch(`${API_URL}/api/auth/connexion`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          mot_de_passe: formData.password
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Email ou mot de passe incorrect')
+      }
+
+      // Stocker le token et les infos utilisateur
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('user', JSON.stringify(data.user))
+
+      // Redirection selon le rôle
+      const role = data.user.role
+      if (role === 'ADMIN') {
+        router.push('/admin')
+      } else if (role === 'PRESTATAIRE') {
+        router.push('/prestataire')
+      } else {
+        router.push('/client')
+      }
+    } catch (err: any) {
+      setError(err.message || 'Email ou mot de passe incorrect')
     } finally {
       setLoading(false)
     }
