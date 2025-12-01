@@ -112,11 +112,12 @@ export default function InscriptionPage() {
       localStorage.setItem('token', data.token)
       localStorage.setItem('user', JSON.stringify(data.user))
 
-      // Redirection selon le type
+      // Redirection vers le dashboard avec le token
+      const token = encodeURIComponent(data.token)
       if (userType === 'prestataire') {
-        router.push('/prestataire')
+        window.location.href = `https://dashboard.alloservicesenegal.com/prestataire?token=${token}`
       } else {
-        router.push('/client')
+        window.location.href = `https://dashboard.alloservicesenegal.com/client?token=${token}`
       }
     } catch (err: any) {
       setError(err.message || 'Une erreur est survenue. Veuillez réessayer.')

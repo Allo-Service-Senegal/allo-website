@@ -45,14 +45,15 @@ export default function ConnexionPage() {
       localStorage.setItem('token', data.token)
       localStorage.setItem('user', JSON.stringify(data.user))
 
-      // Redirection selon le rôle
+      // Redirection vers le dashboard avec le token
+      const token = encodeURIComponent(data.token)
       const role = data.user.role
       if (role === 'ADMIN') {
-        router.push('/admin')
+        window.location.href = `https://dashboard.alloservicesenegal.com/admin?token=${token}`
       } else if (role === 'PRESTATAIRE') {
-        router.push('/prestataire')
+        window.location.href = `https://dashboard.alloservicesenegal.com/prestataire?token=${token}`
       } else {
-        router.push('/client')
+        window.location.href = `https://dashboard.alloservicesenegal.com/client?token=${token}`
       }
     } catch (err: any) {
       setError(err.message || 'Email ou mot de passe incorrect')
