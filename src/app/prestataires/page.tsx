@@ -31,33 +31,81 @@ interface Categorie {
   slug: string
 }
 
+interface Ville {
+  id: number
+  nom: string
+}
+
+interface Quartier {
+  id: number
+  nom: string
+  ville_id: number
+}
+
 export default function Prestataires() {
   const [prestataires, setPrestataires] = useState<Prestataire[]>([])
   const [categories, setCategories] = useState<Categorie[]>([])
+  const [villes, setVilles] = useState<Ville[]>([])
+  const [quartiers, setQuartiers] = useState<Quartier[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [showMobileFilters, setShowMobileFilters] = useState(false)
   
   const [filters, setFilters] = useState({
     search: '',
     categorie: '',
+    ville: '',
+    quartier: '',
     verifie: false
   })
 
-  // Charger les catégories
+  // Charger les catégories et villes au démarrage
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchInitialData = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/categories`)
-        if (res.ok) {
-          const data = await res.json()
+        const [catRes, villesRes] = await Promise.all([
+          fetch(`${API_URL}/api/categories`),
+          fetch(`${API_URL}/api/villes`)
+        ])
+        
+        if (catRes.ok) {
+          const data = await catRes.json()
           setCategories(data.data || [])
         }
+        
+        if (villesRes.ok) {
+          const data = await villesRes.json()
+          setVilles(data.data || [])
+        }
       } catch (error) {
-        console.error('Erreur chargement catégories:', error)
+        console.error('Erreur:', error)
       }
     }
-    fetchCategories()
+    fetchInitialData()
   }, [])
+
+  // Charger les quartiers quand la ville change
+  useEffect(() => {
+    const fetchQuartiers = async () => {
+      if (!filters.ville) {
+        setQuartiers([])
+        return
+      }
+      try {
+        const villeSelected = villes.find(v => v.nom === filters.ville)
+        if (villeSelected) {
+          const res = await fetch(`${API_URL}/api/quartiers?ville_id=${villeSelected.id}`)
+          if (res.ok) {
+            const data = await res.json()
+            setQuartiers(data.data || [])
+          }
+        }
+      } catch (error) {
+        console.error('Erreur:', error)
+      }
+    }
+    fetchQuartiers()
+    setFilters(prev => ({ ...prev, quartier: '' }))
+  }, [filters.ville, villes])
 
   // Charger les prestataires
   useEffect(() => {
@@ -67,6 +115,8 @@ export default function Prestataires() {
         let url = `${API_URL}/api/prestataires?limit=50`
         if (filters.verifie) url += '&verifie=true'
         if (filters.search) url += `&q=${encodeURIComponent(filters.search)}`
+        if (filters.ville) url += `&ville=${encodeURIComponent(filters.ville)}`
+        if (filters.quartier) url += `&quartier=${encodeURIComponent(filters.quartier)}`
         
         const res = await fetch(url)
         if (res.ok) {
@@ -82,6 +132,13 @@ export default function Prestataires() {
             )
           }
           
+          // Trier : vérifiés en premier, puis par note
+          results.sort((a: Prestataire, b: Prestataire) => {
+            if (a.verifie && !b.verifie) return -1
+            if (!a.verifie && b.verifie) return 1
+            return (b.note_globale || 0) - (a.note_globale || 0)
+          })
+          
           setPrestataires(results)
         }
       } catch (error) {
@@ -91,17 +148,27 @@ export default function Prestataires() {
       }
     }
     fetchPrestataires()
-  }, [filters.search, filters.verifie, filters.categorie])
+  }, [filters.search, filters.verifie, filters.categorie, filters.ville, filters.quartier])
 
   const clearFilters = () => {
     setFilters({
       search: '',
       categorie: '',
+      ville: '',
+      quartier: '',
       verifie: false
     })
   }
 
-  const hasActiveFilters = filters.search || filters.categorie || filters.verifie
+  const hasActiveFilters = filters.search || filters.categorie || filters.ville || filters.quartier || filters.verifie
+
+  // Dédupliquer les métiers pour l'affichage
+  const getUniqueMetiers = (services: Prestataire['services']) => {
+    if (!services) return 'Prestataire'
+    const metiers = services.map(s => s.categorie?.nom).filter(Boolean)
+    const unique = metiers.filter((v, i, a) => a.indexOf(v) === i)
+    return unique.join(', ') || 'Prestataire'
+  }
 
   const FilterContent = () => (
     <div className="space-y-6">
@@ -137,6 +204,44 @@ export default function Prestataires() {
             <option key={cat.id} value={cat.nom}>{cat.nom}</option>
           ))}
         </select>
+      </div>
+
+      {/* Ville */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Ville
+        </label>
+        <select
+          value={filters.ville}
+          onChange={(e) => setFilters({ ...filters, ville: e.target.value })}
+          className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent text-sm bg-white"
+        >
+          <option value="">Toutes les villes</option>
+          {villes.map(ville => (
+            <option key={ville.id} value={ville.nom}>{ville.nom}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Quartier */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Quartier
+        </label>
+        <select
+          value={filters.quartier}
+          onChange={(e) => setFilters({ ...filters, quartier: e.target.value })}
+          disabled={!filters.ville}
+          className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent text-sm bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+        >
+          <option value="">Tous les quartiers</option>
+          {quartiers.map(quartier => (
+            <option key={quartier.id} value={quartier.nom}>{quartier.nom}</option>
+          ))}
+        </select>
+        {!filters.ville && (
+          <p className="text-xs text-gray-500 mt-1">Sélectionnez d'abord une ville</p>
+        )}
       </div>
 
       {/* Vérifié */}
@@ -267,16 +372,16 @@ export default function Prestataires() {
                         {prestataire.user.prenom} {prestataire.user.nom}
                       </h3>
 
-                      {/* Métier */}
+                      {/* Métier - Dédupliqué */}
                       <p className="text-secondary text-sm mb-2">
-                        {prestataire.services?.map(s => s.categorie?.nom).filter(Boolean).join(', ') || 'Prestataire'}
+                        {getUniqueMetiers(prestataire.services)}
                       </p>
 
                       {/* Note */}
                       <div className="flex items-center justify-center mb-3">
                         <Star className="w-5 h-5 text-yellow-500 fill-current" />
                         <span className="ml-1 font-semibold text-gray-900">
-                          {prestataire.note_globale?.toFixed(1) || '5.0'}
+                          {prestataire.note_globale?.toFixed(1) || '0.0'}
                         </span>
                         <span className="ml-1 text-gray-500 text-sm">
                           ({prestataire.nombre_avis || 0} avis)

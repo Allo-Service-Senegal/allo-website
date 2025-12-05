@@ -22,6 +22,7 @@ interface Service {
       prenom: string
     }
     note_globale: number
+    verifie?: boolean
     quartier?: {
       nom: string
       ville?: {
@@ -137,7 +138,21 @@ function ServicesContent() {
         const res = await fetch(url)
         if (res.ok) {
           const data = await res.json()
-          setServices(data.data?.services || [])
+          let results = data.data?.services || []
+          
+          // Trier : vedette en premier, puis prestataires vérifiés, puis par note
+          results.sort((a: Service, b: Service) => {
+            // Vedette en premier
+            if (a.vedette && !b.vedette) return -1
+            if (!a.vedette && b.vedette) return 1
+            // Puis prestataires vérifiés
+            if (a.prestataire?.verifie && !b.prestataire?.verifie) return -1
+            if (!a.prestataire?.verifie && b.prestataire?.verifie) return 1
+            // Puis par note
+            return (b.prestataire?.note_globale || 0) - (a.prestataire?.note_globale || 0)
+          })
+          
+          setServices(results)
           setPagination(prev => ({
             ...prev,
             total: data.data?.pagination?.total || 0,

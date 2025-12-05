@@ -317,10 +317,15 @@ export default function PrestataireDetail() {
 
                 {/* Boutons d'action */}
                 <div className="space-y-3">
-                  <button className="w-full bg-primary text-white py-3 px-4 rounded-lg hover:bg-primary/90 transition font-medium flex items-center justify-center">
+                  <a 
+                    href={`https://wa.me/${whatsappNumber}?text=Bonjour ${prestataire.user?.prenom}, je souhaite un devis pour vos services. Pouvez-vous me contacter pour plus de détails ?`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full bg-primary text-white py-3 px-4 rounded-lg hover:bg-primary/90 transition font-medium flex items-center justify-center"
+                  >
                     <Calendar className="w-5 h-5 mr-2" />
                     Demander un devis
-                  </button>
+                  </a>
                   
                   {showPhone ? (
                     <a 
