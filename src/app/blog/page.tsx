@@ -1,133 +1,102 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
-import { Calendar, Clock, User, ArrowRight, Search } from 'lucide-react'
+import { Calendar, Clock, User, ArrowRight, Search, Loader2 } from 'lucide-react'
 
-const categories = [
-  { id: 'all', nom: 'Tous' },
-  { id: 'conseils', nom: 'Conseils' },
-  { id: 'guides', nom: 'Guides' },
-  { id: 'actualites', nom: 'Actualités' },
-  { id: 'temoignages', nom: 'Témoignages' },
-]
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://allo-api-production.up.railway.app'
 
-const articlesDemo = [
-  {
-    id: 1,
-    slug: 'comment-choisir-un-bon-plombier',
-    titre: 'Comment choisir un bon plombier à Dakar ?',
-    extrait: 'Découvrez nos conseils pour trouver un plombier fiable et compétent à Dakar. Vérifications, questions à poser, signes de qualité...',
-    contenu: '',
-    image: '/images/blog/plombier.jpg',
-    categorie: 'conseils',
-    auteur: 'Équipe Allo Service',
-    date: '25 Nov 2025',
-    temps_lecture: '5 min',
-    vedette: true
-  },
-  {
-    id: 2,
-    slug: 'guide-entretien-climatiseur',
-    titre: 'Guide complet : Entretenir son climatiseur au Sénégal',
-    extrait: 'Un climatiseur bien entretenu dure plus longtemps et consomme moins. Voici tous nos conseils pour prendre soin de votre appareil.',
-    contenu: '',
-    image: '/images/blog/climatiseur.jpg',
-    categorie: 'guides',
-    auteur: 'Mamadou Diallo',
-    date: '20 Nov 2025',
-    temps_lecture: '8 min',
-    vedette: true
-  },
-  {
-    id: 3,
-    slug: 'nouvelle-fonctionnalite-paiement-wave',
-    titre: 'Nouveau : Payez vos prestataires via Wave !',
-    extrait: 'Allo Service Sénégal intègre désormais Wave pour faciliter vos paiements. Découvrez comment utiliser cette nouvelle fonctionnalité.',
-    contenu: '',
-    image: '/images/blog/wave.jpg',
-    categorie: 'actualites',
-    auteur: 'Équipe Allo Service',
-    date: '15 Nov 2025',
-    temps_lecture: '3 min',
-    vedette: false
-  },
-  {
-    id: 4,
-    slug: 'temoignage-fatou-menage',
-    titre: 'Témoignage : Fatou, agent de ménage à Pikine',
-    extrait: 'Fatou nous raconte comment Allo Service Sénégal a transformé son activité et lui a permis de trouver de nouveaux clients.',
-    contenu: '',
-    image: '/images/blog/temoignage.jpg',
-    categorie: 'temoignages',
-    auteur: 'Équipe Allo Service',
-    date: '10 Nov 2025',
-    temps_lecture: '4 min',
-    vedette: false
-  },
-  {
-    id: 5,
-    slug: 'preparer-hivernage-maison',
-    titre: '5 conseils pour préparer votre maison à l\'hivernage',
-    extrait: 'L\'hivernage approche ! Découvrez comment protéger votre maison des intempéries avec nos conseils pratiques.',
-    contenu: '',
-    image: '/images/blog/hivernage.jpg',
-    categorie: 'conseils',
-    auteur: 'Omar Tall',
-    date: '5 Nov 2025',
-    temps_lecture: '6 min',
-    vedette: false
-  },
-  {
-    id: 6,
-    slug: 'tarifs-services-domicile-senegal',
-    titre: 'Les tarifs des services à domicile au Sénégal en 2025',
-    extrait: 'Combien coûte un plombier, un électricien ou une femme de ménage au Sénégal ? Notre guide des tarifs actualisé.',
-    contenu: '',
-    image: '/images/blog/tarifs.jpg',
-    categorie: 'guides',
-    auteur: 'Équipe Allo Service',
-    date: '1 Nov 2025',
-    temps_lecture: '7 min',
-    vedette: false
-  },
-]
+interface CategorieArticle {
+  id: number
+  nom: string
+  slug: string
+}
+
+interface Article {
+  id: number
+  titre: string
+  slug: string
+  extrait: string
+  image?: string
+  created_at: string
+  vues: number
+  categorie?: CategorieArticle
+  auteur?: {
+    nom: string
+    prenom: string
+  }
+}
 
 export default function Blog() {
-  const [articles] = useState(articlesDemo)
-  const [filteredArticles, setFilteredArticles] = useState(articlesDemo)
-  const [selectedCategory, setSelectedCategory] = useState('all')
+  const [articles, setArticles] = useState<Article[]>([])
+  const [categories, setCategories] = useState<CategorieArticle[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [searchQuery, setSearchQuery] = useState('')
+  const [pagination, setPagination] = useState({ page: 1, total: 0, totalPages: 0 })
 
-  const handleFilter = (categorie: string) => {
-    setSelectedCategory(categorie)
-    filterArticles(categorie, searchQuery)
+  // Charger les catégories d'articles
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/categories-articles`)
+        if (res.ok) {
+          const data = await res.json()
+          setCategories(data.data || [])
+        }
+      } catch (error) {
+        console.error('Erreur:', error)
+      }
+    }
+    fetchCategories()
+  }, [])
+
+  // Charger les articles
+  useEffect(() => {
+    const fetchArticles = async () => {
+      setLoading(true)
+      try {
+        let url = `${API_URL}/api/articles?page=${pagination.page}&limit=9`
+        if (selectedCategory) url += `&categorie=${selectedCategory}`
+        if (searchQuery) url += `&q=${encodeURIComponent(searchQuery)}`
+
+        const res = await fetch(url)
+        if (res.ok) {
+          const data = await res.json()
+          setArticles(data.data?.articles || [])
+          setPagination(prev => ({
+            ...prev,
+            total: data.data?.pagination?.total || 0,
+            totalPages: data.data?.pagination?.total_pages || 0
+          }))
+        }
+      } catch (error) {
+        console.error('Erreur:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchArticles()
+  }, [selectedCategory, searchQuery, pagination.page])
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return ''
+    return new Date(dateStr).toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    })
+  }
+
+  const handleCategoryFilter = (slug: string) => {
+    setSelectedCategory(slug)
+    setPagination(prev => ({ ...prev, page: 1 }))
   }
 
   const handleSearch = (query: string) => {
     setSearchQuery(query)
-    filterArticles(selectedCategory, query)
+    setPagination(prev => ({ ...prev, page: 1 }))
   }
-
-  const filterArticles = (categorie: string, query: string) => {
-    let result = articles
-
-    if (categorie !== 'all') {
-      result = result.filter(a => a.categorie === categorie)
-    }
-
-    if (query) {
-      result = result.filter(a => 
-        a.titre.toLowerCase().includes(query.toLowerCase()) ||
-        a.extrait.toLowerCase().includes(query.toLowerCase())
-      )
-    }
-
-    setFilteredArticles(result)
-  }
-
-  const articlesVedette = articles.filter(a => a.vedette)
 
   return (
     <div className="bg-gray-50 min-h-screen pb-20">
@@ -145,57 +114,27 @@ export default function Blog() {
 
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-7xl mx-auto">
-          {/* Articles à la une */}
-          {articlesVedette.length > 0 && (
-            <section className="mb-16">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">À la une</h2>
-              <div className="grid md:grid-cols-2 gap-6">
-                {articlesVedette.map(article => (
-                  <Link 
-                    key={article.id}
-                    href={`/blog/${article.slug}`}
-                    className="group bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition"
-                  >
-                    <div className="h-48 bg-gradient-to-br from-secondary/20 to-primary/20 relative">
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-6xl font-bold text-primary/20">
-                          {article.titre.charAt(0)}
-                        </span>
-                      </div>
-                      <span className="absolute top-4 left-4 bg-secondary text-white text-xs font-medium px-3 py-1 rounded-full">
-                        {categories.find(c => c.id === article.categorie)?.nom}
-                      </span>
-                    </div>
-                    <div className="p-6">
-                      <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-primary transition line-clamp-2">
-                        {article.titre}
-                      </h3>
-                      <p className="text-gray-600 mb-4 line-clamp-2">{article.extrait}</p>
-                      <div className="flex items-center text-sm text-gray-500">
-                        <Calendar className="w-4 h-4 mr-1" />
-                        {article.date}
-                        <span className="mx-2">•</span>
-                        <Clock className="w-4 h-4 mr-1" />
-                        {article.temps_lecture}
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          )}
-
           {/* Filtres */}
           <section className="mb-8">
             <div className="flex flex-col md:flex-row gap-4 justify-between">
               {/* Catégories */}
               <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => handleCategoryFilter('')}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                    selectedCategory === ''
+                      ? 'bg-primary text-white'
+                      : 'bg-white text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  Tous
+                </button>
                 {categories.map(cat => (
                   <button
                     key={cat.id}
-                    onClick={() => handleFilter(cat.id)}
+                    onClick={() => handleCategoryFilter(cat.slug)}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-                      selectedCategory === cat.id
+                      selectedCategory === cat.slug
                         ? 'bg-primary text-white'
                         : 'bg-white text-gray-600 hover:bg-gray-100'
                     }`}
@@ -222,51 +161,99 @@ export default function Blog() {
           {/* Liste des articles */}
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-6">
-              {selectedCategory === 'all' ? 'Tous les articles' : categories.find(c => c.id === selectedCategory)?.nom}
-              <span className="text-gray-400 font-normal text-lg ml-2">({filteredArticles.length})</span>
+              {selectedCategory 
+                ? categories.find(c => c.slug === selectedCategory)?.nom || 'Articles'
+                : 'Tous les articles'
+              }
+              <span className="text-gray-400 font-normal text-lg ml-2">({pagination.total})</span>
             </h2>
 
-            {filteredArticles.length === 0 ? (
+            {loading ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="w-12 h-12 animate-spin text-primary" />
+              </div>
+            ) : articles.length === 0 ? (
               <div className="bg-white rounded-xl shadow-sm p-12 text-center">
                 <p className="text-gray-500">Aucun article trouvé</p>
+                {(selectedCategory || searchQuery) && (
+                  <button
+                    onClick={() => { setSelectedCategory(''); setSearchQuery(''); }}
+                    className="mt-4 text-secondary hover:underline"
+                  >
+                    Réinitialiser les filtres
+                  </button>
+                )}
               </div>
             ) : (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredArticles.map(article => (
-                  <Link 
-                    key={article.id}
-                    href={`/blog/${article.slug}`}
-                    className="group bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition"
-                  >
-                    <div className="h-40 bg-gradient-to-br from-secondary/10 to-primary/10 relative">
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-5xl font-bold text-primary/15">
-                          {article.titre.charAt(0)}
-                        </span>
+              <>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {articles.map(article => (
+                    <Link 
+                      key={article.id}
+                      href={`/blog/${article.slug}`}
+                      className="group bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition"
+                    >
+                      <div className="h-40 bg-gradient-to-br from-secondary/10 to-primary/10 relative">
+                        {article.image ? (
+                          <img src={article.image} alt={article.titre} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-5xl font-bold text-primary/15">
+                              {article.titre.charAt(0)}
+                            </span>
+                          </div>
+                        )}
+                        {article.categorie && (
+                          <span className="absolute top-3 left-3 bg-white/90 text-primary text-xs font-medium px-2 py-1 rounded-full">
+                            {article.categorie.nom}
+                          </span>
+                        )}
                       </div>
-                      <span className="absolute top-3 left-3 bg-white/90 text-primary text-xs font-medium px-2 py-1 rounded-full">
-                        {categories.find(c => c.id === article.categorie)?.nom}
-                      </span>
-                    </div>
-                    <div className="p-5">
-                      <h3 className="font-semibold text-gray-900 mb-2 group-hover:text-primary transition line-clamp-2">
-                        {article.titre}
-                      </h3>
-                      <p className="text-gray-600 text-sm mb-4 line-clamp-2">{article.extrait}</p>
-                      <div className="flex items-center justify-between text-xs text-gray-500">
-                        <div className="flex items-center">
-                          <User className="w-3 h-3 mr-1" />
-                          {article.auteur}
-                        </div>
-                        <div className="flex items-center">
-                          <Clock className="w-3 h-3 mr-1" />
-                          {article.temps_lecture}
+                      <div className="p-5">
+                        <h3 className="font-semibold text-gray-900 mb-2 group-hover:text-primary transition line-clamp-2">
+                          {article.titre}
+                        </h3>
+                        <p className="text-gray-600 text-sm mb-4 line-clamp-2">{article.extrait}</p>
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                          <div className="flex items-center">
+                            <Calendar className="w-3 h-3 mr-1" />
+                            {formatDate(article.created_at)}
+                          </div>
+                          {article.auteur && (
+                            <div className="flex items-center">
+                              <User className="w-3 h-3 mr-1" />
+                              {article.auteur.prenom} {article.auteur.nom}
+                            </div>
+                          )}
                         </div>
                       </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+                    </Link>
+                  ))}
+                </div>
+
+                {/* Pagination */}
+                {pagination.totalPages > 1 && (
+                  <div className="flex justify-center gap-2 mt-8">
+                    <button
+                      onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))}
+                      disabled={pagination.page === 1}
+                      className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                      Précédent
+                    </button>
+                    <span className="px-4 py-2 text-gray-600">
+                      Page {pagination.page} / {pagination.totalPages}
+                    </span>
+                    <button
+                      onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))}
+                      disabled={pagination.page === pagination.totalPages}
+                      className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                      Suivant
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </section>
 

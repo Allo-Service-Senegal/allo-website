@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Search, MapPin, Filter, Star, X } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
+import { Search, MapPin, Filter, Star, X, Loader2 } from 'lucide-react'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://allo-api-production.up.railway.app'
 
 interface Service {
   id: number
@@ -10,7 +13,8 @@ interface Service {
   description: string
   tarif: number
   type_tarif: string
-  mis_en_avant: boolean
+  vedette: boolean
+  image?: string
   prestataire: {
     id: number
     user: {
@@ -20,7 +24,7 @@ interface Service {
     note_globale: number
     quartier?: {
       nom: string
-      ville: {
+      ville?: {
         nom: string
       }
     }
@@ -32,219 +36,151 @@ interface Service {
   }
 }
 
-const categories = [
-  { id: 1, nom: 'Plomberie', slug: 'plomberie' },
-  { id: 2, nom: 'Électricité', slug: 'electricite' },
-  { id: 3, nom: 'Ménage', slug: 'menage' },
-  { id: 4, nom: 'Peinture', slug: 'peinture' },
-  { id: 5, nom: 'Climatisation', slug: 'climatisation' },
-  { id: 6, nom: 'Menuiserie', slug: 'menuiserie' },
-  { id: 7, nom: 'Traiteur', slug: 'traiteur' },
-  { id: 8, nom: 'Mécanique', slug: 'mecanique' },
-  { id: 9, nom: 'Déménagement', slug: 'demenagement' },
-  { id: 10, nom: 'Jardinage', slug: 'jardinage' },
-]
-
-const villesQuartiers: { [key: string]: string[] } = {
-  'Dakar': ['Almadies', 'Plateau', 'Médina', 'Pikine', 'Grand Dakar', 'Parcelles Assainies', 'Rufisque', 'Guédiawaye', 'Ouakam', 'Ngor', 'Yoff', 'Mermoz', 'Fann', 'Point E', 'Sacré-Coeur'],
-  'Thiès': ['Centre', 'Mbour', 'Saly', 'Tivaouane'],
-  'Saint-Louis': ['Centre', 'Sor', 'Langue de Barbarie', 'Guet Ndar'],
-  'Kaolack': ['Centre', 'Médina Baye', 'Ndangane'],
-  'Ziguinchor': ['Centre', 'Boucotte', 'Lyndiane'],
-  'Diourbel': ['Centre', 'Touba', 'Mbacké'],
-  'Louga': ['Centre', 'Kébémer'],
-  'Tambacounda': ['Centre', 'Kidira'],
+interface Categorie {
+  id: number
+  nom: string
+  slug: string
 }
 
-const villes = Object.keys(villesQuartiers)
+interface Region {
+  id: number
+  nom: string
+}
 
-// Données de démonstration
-const servicesDemo: Service[] = [
-  {
-    id: 1,
-    titre: 'Installation Climatiseur',
-    description: 'Installation complète de climatiseur split avec garantie 1 an',
-    tarif: 25000,
-    type_tarif: 'FORFAIT',
-    mis_en_avant: true,
-    prestataire: {
-      id: 1,
-      user: { nom: 'Diallo', prenom: 'Mamadou' },
-      note_globale: 4.9,
-      quartier: { nom: 'Almadies', ville: { nom: 'Dakar' } }
-    },
-    categorie: { id: 5, nom: 'Climatisation', slug: 'climatisation' }
-  },
-  {
-    id: 2,
-    titre: 'Nettoyage Complet Maison',
-    description: 'Nettoyage professionnel de votre maison ou appartement',
-    tarif: 15000,
-    type_tarif: 'FORFAIT',
-    mis_en_avant: true,
-    prestataire: {
-      id: 2,
-      user: { nom: 'Sow', prenom: 'Fatou' },
-      note_globale: 4.8,
-      quartier: { nom: 'Pikine', ville: { nom: 'Dakar' } }
-    },
-    categorie: { id: 3, nom: 'Ménage', slug: 'menage' }
-  },
-  {
-    id: 3,
-    titre: 'Réparation Plomberie',
-    description: 'Réparation de fuites, débouchage, installation sanitaire',
-    tarif: 10000,
-    type_tarif: 'HEURE',
-    mis_en_avant: true,
-    prestataire: {
-      id: 3,
-      user: { nom: 'Tall', prenom: 'Omar' },
-      note_globale: 4.7,
-      quartier: { nom: 'Médina', ville: { nom: 'Dakar' } }
-    },
-    categorie: { id: 1, nom: 'Plomberie', slug: 'plomberie' }
-  },
-  {
-    id: 4,
-    titre: 'Installation Électrique',
-    description: 'Installation et mise aux normes électriques',
-    tarif: 20000,
-    type_tarif: 'FORFAIT',
-    mis_en_avant: false,
-    prestataire: {
-      id: 4,
-      user: { nom: 'Ndiaye', prenom: 'Ibrahima' },
-      note_globale: 4.7,
-      quartier: { nom: 'Centre', ville: { nom: 'Thiès' } }
-    },
-    categorie: { id: 2, nom: 'Électricité', slug: 'electricite' }
-  },
-  {
-    id: 5,
-    titre: 'Peinture Intérieure',
-    description: 'Peinture de qualité pour vos intérieurs',
-    tarif: 5000,
-    type_tarif: 'M2',
-    mis_en_avant: false,
-    prestataire: {
-      id: 5,
-      user: { nom: 'Ba', prenom: 'Aissatou' },
-      note_globale: 4.9,
-      quartier: { nom: 'Plateau', ville: { nom: 'Dakar' } }
-    },
-    categorie: { id: 4, nom: 'Peinture', slug: 'peinture' }
-  },
-  {
-    id: 6,
-    titre: 'Service Traiteur Événement',
-    description: 'Cuisine sénégalaise traditionnelle pour vos événements',
-    tarif: 50000,
-    type_tarif: 'FORFAIT',
-    mis_en_avant: false,
-    prestataire: {
-      id: 6,
-      user: { nom: 'Gueye', prenom: 'Mariama' },
-      note_globale: 4.8,
-      quartier: { nom: 'Grand Dakar', ville: { nom: 'Dakar' } }
-    },
-    categorie: { id: 7, nom: 'Traiteur', slug: 'traiteur' }
-  },
-]
+interface Ville {
+  id: number
+  nom: string
+  region_id: number
+}
 
 export default function Services() {
-  const [services] = useState<Service[]>(servicesDemo)
-  const [filteredServices, setFilteredServices] = useState<Service[]>(servicesDemo)
-  const [isLoading] = useState(false)
+  const searchParams = useSearchParams()
+  const [services, setServices] = useState<Service[]>([])
+  const [categories, setCategories] = useState<Categorie[]>([])
+  const [regions, setRegions] = useState<Region[]>([])
+  const [villes, setVilles] = useState<Ville[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [showMobileFilters, setShowMobileFilters] = useState(false)
-  const [quartiers, setQuartiers] = useState<string[]>([])
+  const [pagination, setPagination] = useState({ page: 1, total: 0, totalPages: 0 })
   
   const [filters, setFilters] = useState({
     search: '',
-    categorie: '',
+    categorie: searchParams.get('categorie') || '',
+    region: '',
     ville: '',
-    quartier: '',
     vedette: false
   })
 
-  // Mettre à jour les quartiers quand la ville change
+  // Charger catégories et régions au démarrage
   useEffect(() => {
-    if (filters.ville && villesQuartiers[filters.ville]) {
-      setQuartiers(villesQuartiers[filters.ville])
-    } else {
-      setQuartiers([])
+    const fetchInitialData = async () => {
+      try {
+        const [catRes, regRes] = await Promise.all([
+          fetch(`${API_URL}/api/categories`),
+          fetch(`${API_URL}/api/regions`)
+        ])
+        
+        if (catRes.ok) {
+          const data = await catRes.json()
+          setCategories(data.data || [])
+        }
+        
+        if (regRes.ok) {
+          const data = await regRes.json()
+          setRegions(data.data || [])
+        }
+      } catch (error) {
+        console.error('Erreur:', error)
+      }
     }
-    setFilters(prev => ({ ...prev, quartier: '' }))
-  }, [filters.ville])
+    fetchInitialData()
+  }, [])
 
+  // Charger les villes quand la région change
   useEffect(() => {
-    let result = services
-
-    if (filters.search) {
-      result = result.filter(s => 
-        s.titre.toLowerCase().includes(filters.search.toLowerCase()) ||
-        s.description.toLowerCase().includes(filters.search.toLowerCase())
-      )
+    const fetchVilles = async () => {
+      if (!filters.region) {
+        setVilles([])
+        return
+      }
+      try {
+        const res = await fetch(`${API_URL}/api/villes?region_id=${filters.region}`)
+        if (res.ok) {
+          const data = await res.json()
+          setVilles(data.data || [])
+        }
+      } catch (error) {
+        console.error('Erreur:', error)
+      }
     }
+    fetchVilles()
+    setFilters(prev => ({ ...prev, ville: '' }))
+  }, [filters.region])
 
-    if (filters.categorie) {
-      result = result.filter(s => s.categorie.slug === filters.categorie)
+  // Charger les services
+  useEffect(() => {
+    const fetchServices = async () => {
+      setIsLoading(true)
+      try {
+        let url = `${API_URL}/api/services?page=${pagination.page}&limit=12`
+        
+        if (filters.categorie) url += `&categorie=${filters.categorie}`
+        if (filters.ville) url += `&ville=${filters.ville}`
+        if (filters.search) url += `&q=${encodeURIComponent(filters.search)}`
+        if (filters.vedette) url += `&vedette=true`
+        
+        const res = await fetch(url)
+        if (res.ok) {
+          const data = await res.json()
+          setServices(data.data?.services || [])
+          setPagination(prev => ({
+            ...prev,
+            total: data.data?.pagination?.total || 0,
+            totalPages: data.data?.pagination?.total_pages || 0
+          }))
+        }
+      } catch (error) {
+        console.error('Erreur:', error)
+      } finally {
+        setIsLoading(false)
+      }
     }
-
-    if (filters.ville) {
-      result = result.filter(s => 
-        s.prestataire.quartier?.ville.nom.toLowerCase() === filters.ville.toLowerCase()
-      )
-    }
-
-    if (filters.quartier) {
-      result = result.filter(s => 
-        s.prestataire.quartier?.nom.toLowerCase() === filters.quartier.toLowerCase()
-      )
-    }
-
-    if (filters.vedette) {
-      result = result.filter(s => s.mis_en_avant)
-    }
-
-    setFilteredServices(result)
-  }, [filters, services])
+    fetchServices()
+  }, [filters, pagination.page])
 
   const clearFilters = () => {
     setFilters({
       search: '',
       categorie: '',
+      region: '',
       ville: '',
-      quartier: '',
       vedette: false
     })
+    setPagination(prev => ({ ...prev, page: 1 }))
   }
 
-  const hasActiveFilters = filters.search || filters.categorie || filters.ville || filters.quartier || filters.vedette
+  const hasActiveFilters = filters.search || filters.categorie || filters.region || filters.ville || filters.vedette
 
   const formatTarif = (tarif: number, type: string) => {
-    const formatted = tarif.toLocaleString('fr-FR')
+    const f = tarif.toLocaleString('fr-FR')
     switch (type) {
-      case 'HEURE': return `${formatted} CFA/h`
-      case 'M2': return `${formatted} CFA/m²`
-      case 'JOUR': return `${formatted} CFA/jour`
-      default: return `À partir de ${formatted} CFA`
+      case 'HEURE': return `${f} CFA/h`
+      case 'M2': return `${f} CFA/m²`
+      case 'JOUR': return `${f} CFA/jour`
+      default: return `À partir de ${f} CFA`
     }
   }
 
-  // Composant Filtres
   const FilterContent = () => (
     <div className="space-y-6">
       {/* Recherche */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Rechercher
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Rechercher</label>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
           <input
             type="text"
-            placeholder="Mot-clé..."
+            placeholder="Rechercher un service..."
             value={filters.search}
             onChange={(e) => setFilters({ ...filters, search: e.target.value })}
             className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent text-sm"
@@ -254,9 +190,7 @@ export default function Services() {
 
       {/* Catégorie */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Catégorie
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Catégorie</label>
         <select
           value={filters.categorie}
           onChange={(e) => setFilters({ ...filters, categorie: e.target.value })}
@@ -269,41 +203,37 @@ export default function Services() {
         </select>
       </div>
 
-      {/* Ville */}
+      {/* Région */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Ville
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Région</label>
         <select
-          value={filters.ville}
-          onChange={(e) => setFilters({ ...filters, ville: e.target.value })}
+          value={filters.region}
+          onChange={(e) => setFilters({ ...filters, region: e.target.value })}
           className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent text-sm bg-white"
         >
-          <option value="">Toutes les villes</option>
-          {villes.map(ville => (
-            <option key={ville} value={ville}>{ville}</option>
+          <option value="">Toutes les régions</option>
+          {regions.map(region => (
+            <option key={region.id} value={region.id}>{region.nom}</option>
           ))}
         </select>
       </div>
 
-      {/* Quartier */}
+      {/* Ville */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Quartier
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Ville</label>
         <select
-          value={filters.quartier}
-          onChange={(e) => setFilters({ ...filters, quartier: e.target.value })}
-          disabled={!filters.ville}
+          value={filters.ville}
+          onChange={(e) => setFilters({ ...filters, ville: e.target.value })}
+          disabled={!filters.region}
           className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent text-sm bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
         >
-          <option value="">Tous les quartiers</option>
-          {quartiers.map(quartier => (
-            <option key={quartier} value={quartier}>{quartier}</option>
+          <option value="">Toutes les villes</option>
+          {villes.map(ville => (
+            <option key={ville.id} value={ville.nom}>{ville.nom}</option>
           ))}
         </select>
-        {!filters.ville && (
-          <p className="text-xs text-gray-500 mt-1">Sélectionnez d'abord une ville</p>
+        {!filters.region && (
+          <p className="text-xs text-gray-500 mt-1">Sélectionnez d'abord une région</p>
         )}
       </div>
 
@@ -337,11 +267,6 @@ export default function Services() {
     <div className="bg-gray-50 min-h-screen py-8 pb-16">
       <div className="container mx-auto px-4">
         <div className="max-w-7xl mx-auto">
-          {/* Espace Publicitaire */}
-          <div className="mb-8 bg-gradient-to-r from-gray-100 to-gray-200 rounded-xl p-6 text-center border-2 border-dashed border-gray-300">
-            <p className="text-gray-500 text-sm">Espace publicitaire</p>
-          </div>
-
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-primary mb-2">Nos Services</h1>
@@ -356,9 +281,7 @@ export default function Services() {
             <Filter className="w-5 h-5 mr-2" />
             Filtres
             {hasActiveFilters && (
-              <span className="ml-2 bg-secondary text-white text-xs px-2 py-0.5 rounded-full">
-                Actifs
-              </span>
+              <span className="ml-2 bg-secondary text-white text-xs px-2 py-0.5 rounded-full">Actifs</span>
             )}
           </button>
 
@@ -379,94 +302,115 @@ export default function Services() {
             <div className="flex-1">
               {/* Compteur */}
               <div className="mb-4 text-sm text-gray-500">
-                {filteredServices.length} service(s) trouvé(s)
+                {pagination.total} service(s) trouvé(s)
               </div>
 
               {isLoading ? (
                 <div className="flex justify-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                  <Loader2 className="w-12 h-12 animate-spin text-primary" />
                 </div>
-              ) : filteredServices.length === 0 ? (
+              ) : services.length === 0 ? (
                 <div className="bg-white rounded-xl shadow-sm p-12 text-center">
                   <div className="text-gray-400 mb-4">
                     <Search className="w-16 h-16 mx-auto" />
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucun service trouvé</h3>
                   <p className="text-gray-600 mb-4">Essayez de modifier vos critères de recherche</p>
-                  <button
-                    onClick={clearFilters}
-                    className="text-secondary hover:underline"
-                  >
+                  <button onClick={clearFilters} className="text-secondary hover:underline">
                     Effacer les filtres
                   </button>
                 </div>
               ) : (
-                <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {filteredServices.map(service => (
-                    <Link 
-                      key={service.id} 
-                      href={`/services/${service.id}`}
-                      className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition group"
-                    >
-                      {/* Image placeholder */}
-                      <div className="h-40 bg-gradient-to-br from-secondary/20 to-primary/20 relative">
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-5xl font-bold text-primary/20">
-                            {service.titre.charAt(0)}
+                <>
+                  <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {services.map(service => (
+                      <Link 
+                        key={service.id} 
+                        href={`/services/${service.id}`}
+                        className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition group"
+                      >
+                        {/* Image */}
+                        <div className="h-40 bg-gradient-to-br from-secondary/20 to-primary/20 relative">
+                          {service.image ? (
+                            <img src={service.image} alt={service.titre} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <span className="text-5xl font-bold text-primary/20">{service.titre.charAt(0)}</span>
+                            </div>
+                          )}
+                          {service.vedette && (
+                            <span className="absolute top-3 left-3 bg-yellow-500 text-white text-xs font-medium px-2 py-1 rounded-full flex items-center">
+                              <Star className="w-3 h-3 mr-1 fill-current" />
+                              En vedette
+                            </span>
+                          )}
+                          <span className="absolute top-3 right-3 bg-white text-primary text-xs font-medium px-2 py-1 rounded-full">
+                            {service.categorie.nom}
                           </span>
                         </div>
-                        {service.mis_en_avant && (
-                          <span className="absolute top-3 left-3 bg-yellow-500 text-white text-xs font-medium px-2 py-1 rounded-full flex items-center">
-                            <Star className="w-3 h-3 mr-1 fill-current" />
-                            En vedette
-                          </span>
-                        )}
-                        <span className="absolute top-3 right-3 bg-white text-primary text-xs font-medium px-2 py-1 rounded-full">
-                          {service.categorie.nom}
-                        </span>
-                      </div>
 
-                      {/* Contenu */}
-                      <div className="p-5">
-                        <h3 className="font-semibold text-lg text-gray-900 mb-2 group-hover:text-primary transition">
-                          {service.titre}
-                        </h3>
-                        <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                          {service.description}
-                        </p>
+                        {/* Contenu */}
+                        <div className="p-5">
+                          <h3 className="font-semibold text-lg text-gray-900 mb-2 group-hover:text-primary transition">
+                            {service.titre}
+                          </h3>
+                          <p className="text-gray-600 text-sm mb-3 line-clamp-2">{service.description}</p>
+                          <p className="text-secondary font-semibold mb-4">{formatTarif(service.tarif, service.type_tarif)}</p>
 
-                        {/* Tarif */}
-                        <p className="text-secondary font-semibold mb-4">
-                          {formatTarif(service.tarif, service.type_tarif)}
-                        </p>
-
-                        {/* Prestataire */}
-                        <div className="flex items-center justify-between pt-4 border-t">
-                          <div className="flex items-center">
-                            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                              <span className="text-primary font-semibold text-sm">
-                                {service.prestataire.user.prenom.charAt(0)}{service.prestataire.user.nom.charAt(0)}
-                              </span>
+                          {/* Prestataire */}
+                          <div className="flex items-center justify-between pt-4 border-t">
+                            <div className="flex items-center">
+                              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                                <span className="text-primary font-semibold text-sm">
+                                  {service.prestataire.user.prenom?.charAt(0)}{service.prestataire.user.nom?.charAt(0)}
+                                </span>
+                              </div>
+                              <div className="ml-3">
+                                <p className="text-sm font-medium text-gray-900">
+                                  {service.prestataire.user.prenom} {service.prestataire.user.nom}
+                                </p>
+                                {service.prestataire.quartier && (
+                                  <p className="text-xs text-gray-500 flex items-center">
+                                    <MapPin className="w-3 h-3 mr-1" />
+                                    {service.prestataire.quartier.nom}
+                                    {service.prestataire.quartier.ville && `, ${service.prestataire.quartier.ville.nom}`}
+                                  </p>
+                                )}
+                              </div>
                             </div>
-                            <div className="ml-3">
-                              <p className="text-sm font-medium text-gray-900">
-                                {service.prestataire.user.prenom} {service.prestataire.user.nom}
-                              </p>
-                              <p className="text-xs text-gray-500 flex items-center">
-                                <MapPin className="w-3 h-3 mr-1" />
-                                {service.prestataire.quartier?.nom}, {service.prestataire.quartier?.ville.nom}
-                              </p>
+                            <div className="flex items-center text-yellow-500">
+                              <Star className="w-4 h-4 fill-current" />
+                              <span className="ml-1 text-sm font-medium">{service.prestataire.note_globale?.toFixed(1) || '5.0'}</span>
                             </div>
-                          </div>
-                          <div className="flex items-center text-yellow-500">
-                            <Star className="w-4 h-4 fill-current" />
-                            <span className="ml-1 text-sm font-medium">{service.prestataire.note_globale}</span>
                           </div>
                         </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+                      </Link>
+                    ))}
+                  </div>
+
+                  {/* Pagination */}
+                  {pagination.totalPages > 1 && (
+                    <div className="flex justify-center gap-2 mt-8">
+                      <button
+                        onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))}
+                        disabled={pagination.page === 1}
+                        className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                      >
+                        Précédent
+                      </button>
+                      <span className="px-4 py-2 text-gray-600">
+                        Page {pagination.page} / {pagination.totalPages}
+                      </span>
+                      <button
+                        onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))}
+                        disabled={pagination.page === pagination.totalPages}
+                        className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                      >
+                        Suivant
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>

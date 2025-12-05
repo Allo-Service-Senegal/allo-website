@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://allo-api-production.up.railway.app'
 
 interface ApiResponse<T> {
   success: boolean
@@ -17,6 +17,7 @@ export async function apiFetch<T>(
         'Content-Type': 'application/json',
         ...options?.headers,
       },
+      next: { revalidate: 60 } // Cache 1 minute
     })
 
     const data = await response.json()
@@ -38,6 +39,9 @@ export const getServices = (params?: string) =>
 export const getServicesEnVedette = () => 
   apiFetch('/api/services?vedette=true&limit=6')
 
+export const getServiceById = (id: string | number) => 
+  apiFetch(`/api/services/${id}`)
+
 // Catégories
 export const getCategories = () => 
   apiFetch('/api/categories')
@@ -46,13 +50,29 @@ export const getCategories = () =>
 export const getPrestataires = (params?: string) => 
   apiFetch(`/api/prestataires${params ? `?${params}` : ''}`)
 
-// Régions
-export const getRegions = (includeVilles = true) => 
-  apiFetch(`/api/regions?villes=${includeVilles}`)
+export const getPrestataireById = (id: string | number) => 
+  apiFetch(`/api/prestataires/${id}`)
+
+// Régions / Villes / Quartiers
+export const getRegions = () => 
+  apiFetch('/api/regions')
+
+export const getVilles = (regionId?: number) => 
+  apiFetch(`/api/villes${regionId ? `?region_id=${regionId}` : ''}`)
+
+export const getQuartiers = (villeId?: number) => 
+  apiFetch(`/api/quartiers${villeId ? `?ville_id=${villeId}` : ''}`)
 
 // Témoignages
 export const getTemoignages = () => 
   apiFetch('/api/temoignages')
+
+// Articles du blog
+export const getArticles = (params?: string) => 
+  apiFetch(`/api/articles${params ? `?${params}` : ''}`)
+
+export const getArticleBySlug = (slug: string) => 
+  apiFetch(`/api/articles/${slug}`)
 
 // Auth
 export const inscription = (data: any) => 
@@ -61,8 +81,15 @@ export const inscription = (data: any) =>
     body: JSON.stringify(data)
   })
 
-export const connexion = (data: { email: string; motDePasse: string }) => 
+export const connexion = (data: { email: string; mot_de_passe: string }) => 
   apiFetch('/api/auth/connexion', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+
+// Contact
+export const sendContact = (data: { nom: string; email: string; telephone?: string; sujet: string; message: string }) => 
+  apiFetch('/api/contact', {
     method: 'POST',
     body: JSON.stringify(data)
   })
