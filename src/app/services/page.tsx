@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Search, MapPin, Filter, Star, X, Loader2 } from 'lucide-react'
@@ -53,7 +53,7 @@ interface Ville {
   region_id: number
 }
 
-export default function Services() {
+function ServicesContent() {
   const searchParams = useSearchParams()
   const [services, setServices] = useState<Service[]>([])
   const [categories, setCategories] = useState<Categorie[]>([])
@@ -435,5 +435,17 @@ export default function Services() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function Services() {
+  return (
+    <Suspense fallback={
+      <div className="bg-gray-50 min-h-screen py-8 flex items-center justify-center">
+        <Loader2 className="w-12 h-12 animate-spin text-primary" />
+      </div>
+    }>
+      <ServicesContent />
+    </Suspense>
   )
 }
