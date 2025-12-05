@@ -367,6 +367,13 @@ export default function Prestataires() {
                         )}
                       </div>
 
+                      {/* Badge non vérifié */}
+                      {!prestataire.verifie && (
+                        <p className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-full mb-2">
+                          ⚠️ Prestataire non vérifié
+                        </p>
+                      )}
+
                       {/* Nom */}
                       <h3 className="font-semibold text-lg text-gray-900 mb-1 group-hover:text-primary transition">
                         {prestataire.user.prenom} {prestataire.user.nom}

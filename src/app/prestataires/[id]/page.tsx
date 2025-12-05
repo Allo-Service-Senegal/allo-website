@@ -222,6 +222,16 @@ export default function PrestataireDetail() {
                     <p className="text-gray-700 leading-relaxed">{prestataire.bio}</p>
                   </div>
                 )}
+
+                {/* Avertissement non vérifié */}
+                {!prestataire.verifie && (
+                  <div className="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                    <p className="text-orange-700 text-sm flex items-center">
+                      <span className="mr-2">⚠️</span>
+                      Ce prestataire n'est pas encore vérifié. Nous vous recommandons de vérifier ses références avant de faire appel à ses services.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Services */}

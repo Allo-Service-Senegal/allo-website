@@ -209,6 +209,16 @@ export default function ServiceDetail() {
                       )}
                     </div>
                   </Link>
+
+                  {/* Avertissement non vérifié */}
+                  {!service.prestataire.verifie && (
+                    <div className="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                      <p className="text-orange-700 text-sm flex items-center">
+                        <span className="mr-2">⚠️</span>
+                        Ce prestataire n'est pas encore vérifié. Nous vous recommandons de vérifier ses références.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -226,10 +236,15 @@ export default function ServiceDetail() {
 
                 {/* Garanties */}
                 <div className="space-y-3 mb-6 pb-6 border-b">
-                  {service.prestataire?.verifie && (
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Shield className="w-4 h-4 mr-2 text-secondary" />
+                  {service.prestataire?.verifie ? (
+                    <div className="flex items-center text-sm text-green-600">
+                      <Shield className="w-4 h-4 mr-2" />
                       Prestataire vérifié
+                    </div>
+                  ) : (
+                    <div className="flex items-center text-sm text-orange-600">
+                      <Shield className="w-4 h-4 mr-2" />
+                      Prestataire non vérifié
                     </div>
                   )}
                   <div className="flex items-center text-sm text-gray-600">
