@@ -130,7 +130,8 @@ export default function PrestataireDetail() {
 
   const phone = prestataire.user?.telephone || '+221787886464'
   const whatsappNumber = phone.replace(/\s/g, '').replace('+', '')
-  const metiers = [...new Set(prestataire.services?.map(s => s.categorie?.nom).filter(Boolean))]
+  const metiersSet = prestataire.services?.map(s => s.categorie?.nom).filter(Boolean) || []
+  const metiers = metiersSet.filter((v, i, a) => a.indexOf(v) === i)
 
   return (
     <div className="bg-gray-50 min-h-screen pb-20">
