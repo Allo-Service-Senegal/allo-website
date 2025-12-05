@@ -49,19 +49,19 @@ export default function Hero() {
               <div className="mb-8">
                 <p className="text-white/70 text-sm mb-3">Recherches populaires :</p>
                 <div className="flex flex-wrap gap-2">
-                  <Link href="/categories/plomberie" className="flex items-center bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full text-sm transition">
+                  <Link href="/services?categorie=plomberie" className="flex items-center bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full text-sm transition">
                     <Wrench className="w-4 h-4 mr-2" />
                     Plomberie
                   </Link>
-                  <Link href="/categories/electricite" className="flex items-center bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full text-sm transition">
+                  <Link href="/services?categorie=electricite" className="flex items-center bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full text-sm transition">
                     <Zap className="w-4 h-4 mr-2" />
                     Électricité
                   </Link>
-                  <Link href="/categories/menage" className="flex items-center bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full text-sm transition">
+                  <Link href="/services?categorie=menage" className="flex items-center bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full text-sm transition">
                     <SprayCan className="w-4 h-4 mr-2" />
                     Ménage
                   </Link>
-                  <Link href="/categories/peinture" className="flex items-center bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full text-sm transition">
+                  <Link href="/services?categorie=peinture" className="flex items-center bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full text-sm transition">
                     <Paintbrush className="w-4 h-4 mr-2" />
                     Peinture
                   </Link>

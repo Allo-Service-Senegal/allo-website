@@ -41,28 +41,33 @@ export default function Footer() {
               <h3 className="font-semibold text-lg mb-4">Services</h3>
               <ul className="space-y-2">
                 <li>
-                  <Link href="/categories/plomberie" className="text-white/80 hover:text-secondary transition">
+                  <Link href="/services?categorie=plomberie" className="text-white/80 hover:text-secondary transition">
                     Plomberie
                   </Link>
                 </li>
                 <li>
-                  <Link href="/categories/electricite" className="text-white/80 hover:text-secondary transition">
+                  <Link href="/services?categorie=electricite" className="text-white/80 hover:text-secondary transition">
                     Électricité
                   </Link>
                 </li>
                 <li>
-                  <Link href="/categories/menage" className="text-white/80 hover:text-secondary transition">
+                  <Link href="/services?categorie=menage" className="text-white/80 hover:text-secondary transition">
                     Ménage
                   </Link>
                 </li>
                 <li>
-                  <Link href="/categories/peinture" className="text-white/80 hover:text-secondary transition">
+                  <Link href="/services?categorie=peinture" className="text-white/80 hover:text-secondary transition">
                     Peinture
                   </Link>
                 </li>
                 <li>
                   <Link href="/services" className="text-secondary hover:underline transition">
                     Voir tous les services →
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/blog" className="text-white/80 hover:text-secondary transition">
+                    📰 Blog
                   </Link>
                 </li>
               </ul>
