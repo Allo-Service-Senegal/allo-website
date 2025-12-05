@@ -284,11 +284,6 @@ export default function ServiceDetail() {
                     Contacter sur WhatsApp
                   </a>
                 </div>
-
-                {/* Note de confiance */}
-                <p className="text-xs text-gray-500 text-center mt-4">
-                  Paiement sécurisé via Wave, Orange Money ou carte bancaire
-                </p>
               </div>
             </div>
           </div>

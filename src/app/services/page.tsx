@@ -140,16 +140,13 @@ function ServicesContent() {
           const data = await res.json()
           let results = data.data?.services || []
           
-          // Trier : vedette en premier, puis prestataires vérifiés, puis par note
+          // Trier : prestataires vérifiés en premier, puis par date (plus récent)
           results.sort((a: Service, b: Service) => {
-            // Vedette en premier
-            if (a.vedette && !b.vedette) return -1
-            if (!a.vedette && b.vedette) return 1
-            // Puis prestataires vérifiés
+            // Prestataires vérifiés en premier
             if (a.prestataire?.verifie && !b.prestataire?.verifie) return -1
             if (!a.prestataire?.verifie && b.prestataire?.verifie) return 1
-            // Puis par note
-            return (b.prestataire?.note_globale || 0) - (a.prestataire?.note_globale || 0)
+            // Puis par ID décroissant (plus récent = ID plus grand)
+            return (b.id || 0) - (a.id || 0)
           })
           
           setServices(results)
