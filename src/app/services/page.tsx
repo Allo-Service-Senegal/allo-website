@@ -42,42 +42,42 @@ interface Categorie {
   slug: string
 }
 
-interface Region {
+interface Ville {
   id: number
   nom: string
 }
 
-interface Ville {
+interface Quartier {
   id: number
   nom: string
-  region_id: number
+  ville_id: number
 }
 
 function ServicesContent() {
   const searchParams = useSearchParams()
   const [services, setServices] = useState<Service[]>([])
   const [categories, setCategories] = useState<Categorie[]>([])
-  const [regions, setRegions] = useState<Region[]>([])
   const [villes, setVilles] = useState<Ville[]>([])
+  const [quartiers, setQuartiers] = useState<Quartier[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [showMobileFilters, setShowMobileFilters] = useState(false)
   const [pagination, setPagination] = useState({ page: 1, total: 0, totalPages: 0 })
   
   const [filters, setFilters] = useState({
-    search: '',
+    search: searchParams.get('q') || '',
     categorie: searchParams.get('categorie') || '',
-    region: '',
-    ville: '',
+    ville: searchParams.get('ville') || '',
+    quartier: '',
     vedette: false
   })
 
-  // Charger catégories et régions au démarrage
+  // Charger catégories et villes au démarrage
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [catRes, regRes] = await Promise.all([
+        const [catRes, villesRes] = await Promise.all([
           fetch(`${API_URL}/api/categories`),
-          fetch(`${API_URL}/api/regions`)
+          fetch(`${API_URL}/api/villes`)
         ])
         
         if (catRes.ok) {
@@ -85,9 +85,9 @@ function ServicesContent() {
           setCategories(data.data || [])
         }
         
-        if (regRes.ok) {
-          const data = await regRes.json()
-          setRegions(data.data || [])
+        if (villesRes.ok) {
+          const data = await villesRes.json()
+          setVilles(data.data || [])
         }
       } catch (error) {
         console.error('Erreur:', error)
@@ -96,26 +96,30 @@ function ServicesContent() {
     fetchInitialData()
   }, [])
 
-  // Charger les villes quand la région change
+  // Charger les quartiers quand la ville change
   useEffect(() => {
-    const fetchVilles = async () => {
-      if (!filters.region) {
-        setVilles([])
+    const fetchQuartiers = async () => {
+      if (!filters.ville) {
+        setQuartiers([])
         return
       }
       try {
-        const res = await fetch(`${API_URL}/api/villes?region_id=${filters.region}`)
-        if (res.ok) {
-          const data = await res.json()
-          setVilles(data.data || [])
+        // Trouver l'ID de la ville sélectionnée
+        const villeSelected = villes.find(v => v.nom === filters.ville)
+        if (villeSelected) {
+          const res = await fetch(`${API_URL}/api/quartiers?ville_id=${villeSelected.id}`)
+          if (res.ok) {
+            const data = await res.json()
+            setQuartiers(data.data || [])
+          }
         }
       } catch (error) {
         console.error('Erreur:', error)
       }
     }
-    fetchVilles()
-    setFilters(prev => ({ ...prev, ville: '' }))
-  }, [filters.region])
+    fetchQuartiers()
+    setFilters(prev => ({ ...prev, quartier: '' }))
+  }, [filters.ville, villes])
 
   // Charger les services
   useEffect(() => {
@@ -125,7 +129,8 @@ function ServicesContent() {
         let url = `${API_URL}/api/services?page=${pagination.page}&limit=12`
         
         if (filters.categorie) url += `&categorie=${filters.categorie}`
-        if (filters.ville) url += `&ville=${filters.ville}`
+        if (filters.ville) url += `&ville=${encodeURIComponent(filters.ville)}`
+        if (filters.quartier) url += `&quartier=${encodeURIComponent(filters.quartier)}`
         if (filters.search) url += `&q=${encodeURIComponent(filters.search)}`
         if (filters.vedette) url += `&vedette=true`
         
@@ -152,22 +157,22 @@ function ServicesContent() {
     setFilters({
       search: '',
       categorie: '',
-      region: '',
       ville: '',
+      quartier: '',
       vedette: false
     })
     setPagination(prev => ({ ...prev, page: 1 }))
   }
 
-  const hasActiveFilters = filters.search || filters.categorie || filters.region || filters.ville || filters.vedette
+  const hasActiveFilters = filters.search || filters.categorie || filters.ville || filters.quartier || filters.vedette
 
   const formatTarif = (tarif: number, type: string) => {
-    const f = tarif.toLocaleString('fr-FR')
+    const formatted = tarif?.toLocaleString('fr-FR') || '0'
     switch (type) {
-      case 'HEURE': return `${f} CFA/h`
-      case 'M2': return `${f} CFA/m²`
-      case 'JOUR': return `${f} CFA/jour`
-      default: return `À partir de ${f} CFA`
+      case 'HEURE': return `${formatted} CFA/h`
+      case 'M2': return `${formatted} CFA/m²`
+      case 'JOUR': return `${formatted} CFA/jour`
+      default: return `À partir de ${formatted} CFA`
     }
   }
 
@@ -203,37 +208,37 @@ function ServicesContent() {
         </select>
       </div>
 
-      {/* Région */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Région</label>
-        <select
-          value={filters.region}
-          onChange={(e) => setFilters({ ...filters, region: e.target.value })}
-          className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent text-sm bg-white"
-        >
-          <option value="">Toutes les régions</option>
-          {regions.map(region => (
-            <option key={region.id} value={region.id}>{region.nom}</option>
-          ))}
-        </select>
-      </div>
-
       {/* Ville */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Ville</label>
         <select
           value={filters.ville}
           onChange={(e) => setFilters({ ...filters, ville: e.target.value })}
-          disabled={!filters.region}
-          className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent text-sm bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+          className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent text-sm bg-white"
         >
           <option value="">Toutes les villes</option>
           {villes.map(ville => (
             <option key={ville.id} value={ville.nom}>{ville.nom}</option>
           ))}
         </select>
-        {!filters.region && (
-          <p className="text-xs text-gray-500 mt-1">Sélectionnez d'abord une région</p>
+      </div>
+
+      {/* Quartier */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Quartier</label>
+        <select
+          value={filters.quartier}
+          onChange={(e) => setFilters({ ...filters, quartier: e.target.value })}
+          disabled={!filters.ville}
+          className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent text-sm bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+        >
+          <option value="">Tous les quartiers</option>
+          {quartiers.map(quartier => (
+            <option key={quartier.id} value={quartier.nom}>{quartier.nom}</option>
+          ))}
+        </select>
+        {!filters.ville && (
+          <p className="text-xs text-gray-500 mt-1">Sélectionnez d'abord une ville</p>
         )}
       </div>
 
@@ -281,7 +286,9 @@ function ServicesContent() {
             <Filter className="w-5 h-5 mr-2" />
             Filtres
             {hasActiveFilters && (
-              <span className="ml-2 bg-secondary text-white text-xs px-2 py-0.5 rounded-full">Actifs</span>
+              <span className="ml-2 bg-secondary text-white text-xs px-2 py-0.5 rounded-full">
+                Actifs
+              </span>
             )}
           </button>
 
@@ -316,7 +323,10 @@ function ServicesContent() {
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucun service trouvé</h3>
                   <p className="text-gray-600 mb-4">Essayez de modifier vos critères de recherche</p>
-                  <button onClick={clearFilters} className="text-secondary hover:underline">
+                  <button
+                    onClick={clearFilters}
+                    className="text-secondary hover:underline"
+                  >
                     Effacer les filtres
                   </button>
                 </div>
@@ -329,60 +339,54 @@ function ServicesContent() {
                         href={`/services/${service.id}`}
                         className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition group"
                       >
-                        {/* Image */}
-                        <div className="h-40 bg-gradient-to-br from-secondary/20 to-primary/20 relative">
-                          {service.image ? (
-                            <img src={service.image} alt={service.titre} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <span className="text-5xl font-bold text-primary/20">{service.titre.charAt(0)}</span>
-                            </div>
-                          )}
+                        {/* Image placeholder */}
+                        <div className="h-40 bg-gradient-to-br from-secondary/20 to-primary/20 relative flex items-center justify-center">
+                          <span className="text-6xl font-bold text-primary/20">
+                            {service.titre?.charAt(0)}
+                          </span>
                           {service.vedette && (
                             <span className="absolute top-3 left-3 bg-yellow-500 text-white text-xs font-medium px-2 py-1 rounded-full flex items-center">
                               <Star className="w-3 h-3 mr-1 fill-current" />
                               En vedette
                             </span>
                           )}
-                          <span className="absolute top-3 right-3 bg-white text-primary text-xs font-medium px-2 py-1 rounded-full">
-                            {service.categorie.nom}
+                          <span className="absolute top-3 right-3 bg-white text-gray-700 text-xs font-medium px-2 py-1 rounded-full">
+                            {service.categorie?.nom}
                           </span>
                         </div>
 
                         {/* Contenu */}
-                        <div className="p-5">
-                          <h3 className="font-semibold text-lg text-gray-900 mb-2 group-hover:text-primary transition">
+                        <div className="p-4">
+                          <h3 className="font-semibold text-gray-900 mb-1 group-hover:text-primary transition line-clamp-1">
                             {service.titre}
                           </h3>
-                          <p className="text-gray-600 text-sm mb-3 line-clamp-2">{service.description}</p>
-                          <p className="text-secondary font-semibold mb-4">{formatTarif(service.tarif, service.type_tarif)}</p>
+                          <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                            {service.description}
+                          </p>
+                          
+                          <p className="text-secondary font-semibold mb-3">
+                            {formatTarif(service.tarif, service.type_tarif)}
+                          </p>
 
                           {/* Prestataire */}
-                          <div className="flex items-center justify-between pt-4 border-t">
-                            <div className="flex items-center">
-                              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                                <span className="text-primary font-semibold text-sm">
-                                  {service.prestataire.user.prenom?.charAt(0)}{service.prestataire.user.nom?.charAt(0)}
+                          {service.prestataire && (
+                            <div className="flex items-center justify-between pt-3 border-t">
+                              <div className="flex items-center">
+                                <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                                  <span className="text-xs font-medium text-primary">
+                                    {service.prestataire.user?.prenom?.charAt(0)}{service.prestataire.user?.nom?.charAt(0)}
+                                  </span>
+                                </div>
+                                <span className="ml-2 text-sm text-gray-600">
+                                  {service.prestataire.user?.prenom} {service.prestataire.user?.nom}
                                 </span>
                               </div>
-                              <div className="ml-3">
-                                <p className="text-sm font-medium text-gray-900">
-                                  {service.prestataire.user.prenom} {service.prestataire.user.nom}
-                                </p>
-                                {service.prestataire.quartier && (
-                                  <p className="text-xs text-gray-500 flex items-center">
-                                    <MapPin className="w-3 h-3 mr-1" />
-                                    {service.prestataire.quartier.nom}
-                                    {service.prestataire.quartier.ville && `, ${service.prestataire.quartier.ville.nom}`}
-                                  </p>
-                                )}
+                              <div className="flex items-center text-sm">
+                                <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                                <span className="ml-1 font-medium">{service.prestataire.note_globale?.toFixed(1) || '0.0'}</span>
                               </div>
                             </div>
-                            <div className="flex items-center text-yellow-500">
-                              <Star className="w-4 h-4 fill-current" />
-                              <span className="ml-1 text-sm font-medium">{service.prestataire.note_globale?.toFixed(1) || '5.0'}</span>
-                            </div>
-                          </div>
+                          )}
                         </div>
                       </Link>
                     ))}
@@ -390,19 +394,19 @@ function ServicesContent() {
 
                   {/* Pagination */}
                   {pagination.totalPages > 1 && (
-                    <div className="flex justify-center gap-2 mt-8">
+                    <div className="flex justify-center mt-8 gap-2">
                       <button
-                        onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))}
+                        onClick={() => setPagination(p => ({ ...p, page: Math.max(1, p.page - 1) }))}
                         disabled={pagination.page === 1}
                         className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                       >
                         Précédent
                       </button>
                       <span className="px-4 py-2 text-gray-600">
-                        Page {pagination.page} / {pagination.totalPages}
+                        Page {pagination.page} sur {pagination.totalPages}
                       </span>
                       <button
-                        onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))}
+                        onClick={() => setPagination(p => ({ ...p, page: Math.min(p.totalPages, p.page + 1) }))}
                         disabled={pagination.page === pagination.totalPages}
                         className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                       >
@@ -438,10 +442,10 @@ function ServicesContent() {
   )
 }
 
-export default function Services() {
+export default function ServicesPage() {
   return (
     <Suspense fallback={
-      <div className="bg-gray-50 min-h-screen py-8 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-12 h-12 animate-spin text-primary" />
       </div>
     }>

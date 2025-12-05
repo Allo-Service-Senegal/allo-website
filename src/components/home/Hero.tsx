@@ -1,10 +1,31 @@
 'use client'
 
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Search, MapPin, Wrench, Zap, SprayCan, Paintbrush, CheckCircle, Star } from 'lucide-react'
 
 export default function Hero() {
+  const router = useRouter()
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedVille, setSelectedVille] = useState('')
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    const params = new URLSearchParams()
+    if (searchQuery.trim()) {
+      params.set('q', searchQuery.trim())
+    }
+    if (selectedVille && selectedVille !== 'Toutes les villes') {
+      params.set('ville', selectedVille)
+    }
+    
+    const queryString = params.toString()
+    router.push(`/services${queryString ? `?${queryString}` : ''}`)
+  }
+
   return (
     <section className="bg-primary text-white py-12 lg:py-20">
       <div className="container mx-auto px-4">
@@ -20,30 +41,39 @@ export default function Hero() {
               </p>
 
               {/* Barre de recherche */}
-              <div className="bg-white rounded-xl p-2 flex flex-col sm:flex-row gap-2 mb-6">
+              <form onSubmit={handleSearch} className="bg-white rounded-xl p-2 flex flex-col sm:flex-row gap-2 mb-6">
                 <div className="flex-1 relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Quel service recherchez-vous ?"
                     className="w-full pl-10 pr-4 py-3 rounded-lg text-gray-900 focus:outline-none"
                   />
                 </div>
                 <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <select className="w-full sm:w-48 pl-10 pr-4 py-3 rounded-lg text-gray-900 focus:outline-none appearance-none bg-white border-l sm:border-l-gray-200">
-                    <option>Toutes les villes</option>
-                    <option>Dakar</option>
-                    <option>Thiès</option>
-                    <option>Saint-Louis</option>
-                    <option>Kaolack</option>
-                    <option>Ziguinchor</option>
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                  <select 
+                    value={selectedVille}
+                    onChange={(e) => setSelectedVille(e.target.value)}
+                    className="w-full sm:w-48 pl-10 pr-4 py-3 rounded-lg text-gray-900 focus:outline-none appearance-none bg-white border-l sm:border-l-gray-200"
+                  >
+                    <option value="">Toutes les villes</option>
+                    <option value="Dakar">Dakar</option>
+                    <option value="Thiès">Thiès</option>
+                    <option value="Saint-Louis">Saint-Louis</option>
+                    <option value="Kaolack">Kaolack</option>
+                    <option value="Ziguinchor">Ziguinchor</option>
                   </select>
                 </div>
-                <button className="bg-secondary text-white px-6 py-3 rounded-lg hover:bg-secondary/90 transition font-medium">
+                <button 
+                  type="submit"
+                  className="bg-secondary text-white px-6 py-3 rounded-lg hover:bg-secondary/90 transition font-medium"
+                >
                   Rechercher
                 </button>
-              </div>
+              </form>
 
               {/* Liens rapides */}
               <div className="mb-8">
