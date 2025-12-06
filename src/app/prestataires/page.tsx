@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Search, MapPin, Filter, Star, CheckCircle, Briefcase, X, Loader2 } from 'lucide-react'
+import BannierePublicitaire from '@/components/BannierePublicitaire'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://allo-api-production.up.railway.app'
 
@@ -274,10 +275,8 @@ export default function Prestataires() {
     <div className="bg-gray-50 min-h-screen py-8 pb-16">
       <div className="container mx-auto px-4">
         <div className="max-w-7xl mx-auto">
-          {/* Espace Publicitaire */}
-          <div className="mb-8 bg-gradient-to-r from-gray-100 to-gray-200 rounded-xl p-6 text-center border-2 border-dashed border-gray-300">
-            <p className="text-gray-500 text-sm">Espace publicitaire</p>
-          </div>
+          {/* Bannière publicitaire dynamique */}
+          <BannierePublicitaire emplacement="PRESTATAIRES" />
 
           {/* Header */}
           <div className="mb-8">
