@@ -113,7 +113,7 @@ export default function ServiceDetail() {
     }
     
     if (userRole === 'PRESTATAIRE') {
-      alert('Les prestataires ne peuvent pas envoyer de demandes. Connectez-vous avec un compte client.')
+      alert('Vous êtes connecté en tant que prestataire. Pour demander un devis, connectez-vous avec un compte client.')
       return
     }
     
