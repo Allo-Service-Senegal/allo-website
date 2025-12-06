@@ -256,27 +256,6 @@ export default function Blog() {
               </>
             )}
           </section>
-
-          {/* CTA Newsletter */}
-          <section className="mt-16 bg-primary rounded-2xl p-8 lg:p-12 text-center text-white">
-            <h2 className="text-2xl lg:text-3xl font-bold mb-4">
-              Restez informé !
-            </h2>
-            <p className="text-white/80 mb-6 max-w-xl mx-auto">
-              Inscrivez-vous à notre newsletter pour recevoir nos derniers conseils et actualités.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-              <input
-                type="email"
-                placeholder="Votre email"
-                className="flex-1 px-4 py-3 rounded-lg text-gray-900 focus:outline-none"
-              />
-              <button className="bg-secondary text-white px-6 py-3 rounded-lg hover:bg-secondary/90 transition font-medium flex items-center justify-center">
-                S'inscrire
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </button>
-            </div>
-          </section>
         </div>
       </div>
     </div>
