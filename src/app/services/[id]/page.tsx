@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { 
   MapPin, Star, Clock, CheckCircle, Phone, MessageCircle, 
-  Share2, Heart, ArrowLeft, Calendar, Shield, ChevronRight, Loader2
+  Share2, Heart, ArrowLeft, Calendar, Shield, ChevronRight, Loader2,
+  X, Send, FileText
 } from 'lucide-react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://allo-api-production.up.railway.app'
@@ -41,11 +42,25 @@ interface Service {
 
 export default function ServiceDetail() {
   const params = useParams()
+  const router = useRouter()
   const id = params.id as string
   const [service, setService] = useState<Service | null>(null)
   const [loading, setLoading] = useState(true)
   const [isFavorite, setIsFavorite] = useState(false)
   const [showPhone, setShowPhone] = useState(false)
+  
+  // État pour le formulaire de demande
+  const [showDemandeModal, setShowDemandeModal] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [userRole, setUserRole] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitSuccess, setSubmitSuccess] = useState(false)
+  const [submitError, setSubmitError] = useState('')
+  const [demandeForm, setDemandeForm] = useState({
+    description: '',
+    date_souhaitee: '',
+    adresse: ''
+  })
 
   useEffect(() => {
     const fetchService = async () => {
@@ -62,7 +77,98 @@ export default function ServiceDetail() {
       }
     }
     fetchService()
+    
+    // Vérifier si l'utilisateur est connecté
+    checkAuth()
   }, [id])
+
+  const checkAuth = async () => {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      setIsLoggedIn(false)
+      return
+    }
+    
+    try {
+      const res = await fetch(`${API_URL}/api/auth/me`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (res.ok) {
+        const user = await res.json()
+        setIsLoggedIn(true)
+        setUserRole(user.role)
+      } else {
+        setIsLoggedIn(false)
+      }
+    } catch {
+      setIsLoggedIn(false)
+    }
+  }
+
+  const handleDemandeClick = () => {
+    if (!isLoggedIn) {
+      // Rediriger vers la connexion avec retour
+      router.push(`/connexion?redirect=/services/${id}`)
+      return
+    }
+    
+    if (userRole === 'PRESTATAIRE') {
+      alert('Les prestataires ne peuvent pas envoyer de demandes. Connectez-vous avec un compte client.')
+      return
+    }
+    
+    // Pré-remplir la description
+    setDemandeForm({
+      ...demandeForm,
+      description: `Demande pour : ${service?.titre}`
+    })
+    setShowDemandeModal(true)
+  }
+
+  const handleSubmitDemande = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!demandeForm.description.trim()) {
+      setSubmitError('Veuillez décrire votre besoin')
+      return
+    }
+    
+    const token = localStorage.getItem('token')
+    if (!token) return
+    
+    setSubmitting(true)
+    setSubmitError('')
+    
+    try {
+      const res = await fetch(`${API_URL}/api/client/demandes`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          prestataire_id: service?.prestataire?.id,
+          service_id: service?.id,
+          description: demandeForm.description,
+          date_souhaitee: demandeForm.date_souhaitee || null,
+          adresse: demandeForm.adresse || null
+        })
+      })
+      
+      const data = await res.json()
+      
+      if (res.ok && data.success) {
+        setSubmitSuccess(true)
+        setDemandeForm({ description: '', date_souhaitee: '', adresse: '' })
+      } else {
+        setSubmitError(data.detail || 'Erreur lors de l\'envoi de la demande')
+      }
+    } catch (error) {
+      setSubmitError('Erreur de connexion au serveur')
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   const formatTarif = (tarif: number, type: string) => {
     const formatted = tarif?.toLocaleString('fr-FR') || '0'
@@ -261,15 +367,14 @@ export default function ServiceDetail() {
 
                 {/* Boutons d'action */}
                 <div className="space-y-3">
-                  <a 
-                    href={`https://wa.me/${whatsappNumber}?text=Bonjour, je souhaite un devis pour : ${service.titre} à ${service.tarif?.toLocaleString('fr-FR')} CFA. Pouvez-vous me contacter pour plus de détails ?`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  {/* Bouton principal - Demande intégrée */}
+                  <button 
+                    onClick={handleDemandeClick}
                     className="w-full bg-primary text-white py-3 px-4 rounded-lg hover:bg-primary/90 transition font-medium flex items-center justify-center"
                   >
-                    <Calendar className="w-5 h-5 mr-2" />
+                    <FileText className="w-5 h-5 mr-2" />
                     Demander un devis
-                  </a>
+                  </button>
                   
                   {showPhone ? (
                     <a 
@@ -299,11 +404,150 @@ export default function ServiceDetail() {
                     Contacter sur WhatsApp
                   </a>
                 </div>
+
+                {/* Info connexion */}
+                {!isLoggedIn && (
+                  <p className="text-xs text-gray-500 text-center mt-4">
+                    <Link href="/connexion" className="text-secondary hover:underline">Connectez-vous</Link> pour envoyer une demande et suivre vos échanges
+                  </p>
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Modal de demande */}
+      {showDemandeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/50" onClick={() => !submitting && setShowDemandeModal(false)} />
+          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            {submitSuccess ? (
+              // Message de succès
+              <div className="p-8 text-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle className="w-8 h-8 text-green-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Demande envoyée !</h3>
+                <p className="text-gray-600 mb-6">
+                  Votre demande a été envoyée à {service.prestataire?.user?.prenom}. 
+                  Vous recevrez une réponse dans les plus brefs délais.
+                </p>
+                <div className="space-y-3">
+                  <a
+                    href="https://dashboard.alloservicesenegal.com/client/demandes"
+                    className="block w-full py-3 px-4 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition text-center"
+                  >
+                    Voir mes demandes
+                  </a>
+                  <button
+                    onClick={() => {
+                      setShowDemandeModal(false)
+                      setSubmitSuccess(false)
+                    }}
+                    className="block w-full py-3 px-4 border border-gray-200 rounded-lg font-medium hover:bg-gray-50 transition"
+                  >
+                    Fermer
+                  </button>
+                </div>
+              </div>
+            ) : (
+              // Formulaire
+              <>
+                <div className="p-6 border-b flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Demander un devis</h3>
+                    <p className="text-sm text-gray-500">Pour : {service.titre}</p>
+                  </div>
+                  <button 
+                    onClick={() => setShowDemandeModal(false)}
+                    disabled={submitting}
+                    className="p-2 hover:bg-gray-100 rounded-lg disabled:opacity-50"
+                  >
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleSubmitDemande} className="p-6 space-y-4">
+                  {submitError && (
+                    <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+                      {submitError}
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Décrivez votre besoin *
+                    </label>
+                    <textarea
+                      value={demandeForm.description}
+                      onChange={(e) => setDemandeForm({ ...demandeForm, description: e.target.value })}
+                      rows={4}
+                      required
+                      placeholder="Décrivez votre projet, vos attentes, les détails importants..."
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Date souhaitée
+                    </label>
+                    <input
+                      type="date"
+                      value={demandeForm.date_souhaitee}
+                      onChange={(e) => setDemandeForm({ ...demandeForm, date_souhaitee: e.target.value })}
+                      min={new Date().toISOString().split('T')[0]}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Adresse d'intervention
+                    </label>
+                    <input
+                      type="text"
+                      value={demandeForm.adresse}
+                      onChange={(e) => setDemandeForm({ ...demandeForm, adresse: e.target.value })}
+                      placeholder="Ex: Dakar, Almadies"
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
+                    />
+                  </div>
+
+                  <div className="pt-4 flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowDemandeModal(false)}
+                      disabled={submitting}
+                      className="flex-1 py-3 px-4 border border-gray-200 rounded-lg font-medium hover:bg-gray-50 transition disabled:opacity-50"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="flex-1 py-3 px-4 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition disabled:opacity-50 flex items-center justify-center"
+                    >
+                      {submitting ? (
+                        <>
+                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                          Envoi...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-5 h-5 mr-2" />
+                          Envoyer
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
