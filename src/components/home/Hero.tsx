@@ -131,12 +131,6 @@ export default function Hero() {
                 <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
                 <span className="font-medium">Prestataires vérifiés</span>
               </div>
-              
-              {/* Badge note */}
-              <div className="absolute -top-4 -right-4 bg-white text-gray-900 px-4 py-3 rounded-xl shadow-lg flex items-center">
-                <Star className="w-5 h-5 text-yellow-500 fill-current mr-2" />
-                <span className="font-medium">Note moyenne 4.8/5</span>
-              </div>
             </div>
           </div>
         </div>
