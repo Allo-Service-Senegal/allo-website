@@ -1,15 +1,50 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Search, MapPin, Wrench, Zap, SprayCan, Paintbrush, CheckCircle, Star } from 'lucide-react'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://allo-api-production.up.railway.app'
+
+interface Stats {
+  prestataires: number
+  clients: number
+  regions: number
+}
+
 export default function Hero() {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedVille, setSelectedVille] = useState('')
+  const [stats, setStats] = useState<Stats>({
+    prestataires: 0,
+    clients: 0,
+    regions: 14
+  })
+
+  // Charger les stats au montage
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/stats/public`)
+        if (res.ok) {
+          const data = await res.json()
+          if (data.success && data.data) {
+            setStats({
+              prestataires: data.data.prestataires || 0,
+              clients: data.data.clients || 0,
+              regions: data.data.regions || 14
+            })
+          }
+        }
+      } catch (error) {
+        console.error('Erreur chargement stats:', error)
+      }
+    }
+    fetchStats()
+  }, [])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -24,6 +59,12 @@ export default function Hero() {
     
     const queryString = params.toString()
     router.push(`/services${queryString ? `?${queryString}` : ''}`)
+  }
+
+  // Formater les nombres (ex: 1500 -> "1 500+")
+  const formatNumber = (num: number) => {
+    if (num === 0) return '...'
+    return num.toLocaleString('fr-FR') + '+'
   }
 
   return (
@@ -98,18 +139,18 @@ export default function Hero() {
                 </div>
               </div>
 
-              {/* Stats */}
+              {/* Stats dynamiques */}
               <div className="grid grid-cols-3 gap-6">
                 <div>
-                  <p className="text-3xl font-bold">500+</p>
+                  <p className="text-3xl font-bold">{formatNumber(stats.prestataires)}</p>
                   <p className="text-white/70">Prestataires</p>
                 </div>
                 <div>
-                  <p className="text-3xl font-bold">1000+</p>
+                  <p className="text-3xl font-bold">{formatNumber(stats.clients)}</p>
                   <p className="text-white/70">Clients satisfaits</p>
                 </div>
                 <div>
-                  <p className="text-3xl font-bold">14</p>
+                  <p className="text-3xl font-bold">{stats.regions}</p>
                   <p className="text-white/70">Régions couvertes</p>
                 </div>
               </div>
