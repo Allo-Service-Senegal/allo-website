@@ -1,0 +1,26 @@
+'use client'
+
+import { usePathname } from 'next/navigation'
+import Header from '@/components/layout/Header'
+import Footer from '@/components/layout/Footer'
+
+export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
+  
+  // Page Coming Soon (accueil) = pas de header/footer
+  const isComingSoon = pathname === '/'
+
+  if (isComingSoon) {
+    return <>{children}</>
+  }
+
+  return (
+    <>
+      <Header />
+      <main className="min-h-screen">
+        {children}
+      </main>
+      <Footer />
+    </>
+  )
+}
