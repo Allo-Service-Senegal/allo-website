@@ -1,14 +1,13 @@
-import { Metadata } from 'next'
+'use client'
+
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { 
   Users, Shield, MapPin, Heart, Target, Eye, 
   CheckCircle, ArrowRight, Phone, Mail 
 } from 'lucide-react'
 
-export const metadata: Metadata = {
-  title: 'À propos - Allo Service Sénégal',
-  description: 'Découvrez Allo Service Sénégal, la marketplace de services de confiance au Sénégal',
-}
+const API_URL = 'https://allo-api-production.up.railway.app'
 
 const values = [
   {
@@ -33,14 +32,52 @@ const values = [
   },
 ]
 
-const stats = [
-  { value: '500+', label: 'Prestataires' },
-  { value: '1000+', label: 'Clients satisfaits' },
-  { value: '14', label: 'Régions couvertes' },
-  { value: '10', label: 'Catégories de services' },
-]
+interface Stats {
+  prestataires: number
+  clients: number
+  regions: number
+  categories: number
+}
 
 export default function APropos() {
+  const [stats, setStats] = useState<Stats>({
+    prestataires: 0,
+    clients: 0,
+    regions: 14,
+    categories: 0
+  })
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/stats`)
+        if (response.ok) {
+          const data = await response.json()
+          setStats({
+            prestataires: data.data?.prestataires || 0,
+            clients: data.data?.clients || 0,
+            regions: data.data?.regions || 14,
+            categories: data.data?.categories || 0
+          })
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des stats:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchStats()
+  }, [])
+
+  const statsDisplay = [
+    { value: stats.prestataires, suffix: '+', label: 'Prestataires' },
+    { value: stats.clients, suffix: '+', label: 'Clients satisfaits' },
+    { value: stats.regions, suffix: '', label: 'Régions couvertes' },
+    { value: stats.categories, suffix: '', label: 'Catégories de services' },
+  ]
+
   return (
     <div className="bg-white">
       {/* Hero avec image de fond */}
@@ -94,10 +131,16 @@ export default function APropos() {
               </div>
               <div className="bg-gray-100 rounded-2xl p-8 lg:p-12">
                 <div className="grid grid-cols-2 gap-6">
-                  {stats.map((stat, index) => (
+                  {statsDisplay.map((stat, index) => (
                     <div key={index} className="text-center">
                       <div className="text-3xl lg:text-4xl font-bold text-primary mb-2">
-                        {stat.value}
+                        {loading ? (
+                          <div className="h-10 w-20 mx-auto bg-gray-200 rounded animate-pulse"></div>
+                        ) : (
+                          <>
+                            {stat.value}{stat.suffix}
+                          </>
+                        )}
                       </div>
                       <div className="text-gray-600">{stat.label}</div>
                     </div>
