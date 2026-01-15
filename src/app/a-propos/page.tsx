@@ -51,15 +51,30 @@ export default function APropos() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/stats`)
+        // Stats principales
+        const response = await fetch(`${API_URL}/api/stats/public`)
         if (response.ok) {
           const data = await response.json()
-          setStats({
-            prestataires: data.data?.prestataires || 0,
-            clients: data.data?.clients || 0,
-            regions: data.data?.regions || 14,
-            categories: data.data?.categories || 0
-          })
+          if (data.success && data.data) {
+            setStats(prev => ({
+              ...prev,
+              prestataires: data.data.prestataires || 0,
+              clients: data.data.clients || 0,
+              regions: data.data.regions || 14
+            }))
+          }
+        }
+
+        // Catégories
+        const catResponse = await fetch(`${API_URL}/api/categories`)
+        if (catResponse.ok) {
+          const catData = await catResponse.json()
+          if (catData.success && catData.data) {
+            setStats(prev => ({
+              ...prev,
+              categories: catData.data.length || 0
+            }))
+          }
         }
       } catch (error) {
         console.error('Erreur lors du chargement des stats:', error)
@@ -71,11 +86,17 @@ export default function APropos() {
     fetchStats()
   }, [])
 
+  // Formater les nombres (ex: 1500 -> "1 500+")
+  const formatNumber = (num: number, addPlus: boolean = true) => {
+    if (num === 0) return '...'
+    return num.toLocaleString('fr-FR') + (addPlus ? '+' : '')
+  }
+
   const statsDisplay = [
-    { value: stats.prestataires, suffix: '+', label: 'Prestataires' },
-    { value: stats.clients, suffix: '+', label: 'Clients satisfaits' },
-    { value: stats.regions, suffix: '', label: 'Régions couvertes' },
-    { value: stats.categories, suffix: '', label: 'Catégories de services' },
+    { value: stats.prestataires, addPlus: true, label: 'Prestataires' },
+    { value: stats.clients, addPlus: true, label: 'Clients satisfaits' },
+    { value: stats.regions, addPlus: false, label: 'Régions couvertes' },
+    { value: stats.categories, addPlus: false, label: 'Catégories de services' },
   ]
 
   return (
@@ -137,9 +158,7 @@ export default function APropos() {
                         {loading ? (
                           <div className="h-10 w-20 mx-auto bg-gray-200 rounded animate-pulse"></div>
                         ) : (
-                          <>
-                            {stat.value}{stat.suffix}
-                          </>
+                          formatNumber(stat.value, stat.addPlus)
                         )}
                       </div>
                       <div className="text-gray-600">{stat.label}</div>
