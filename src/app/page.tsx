@@ -14,7 +14,7 @@ export default function ComingSoon() {
 
   useEffect(() => {
     // Date de lancement : Lundi 19 janvier 2026 à 8h00 (heure de Dakar)
-    const launchDate = new Date('2026-01-26T08:00:00+00:00').getTime()
+    const launchDate = new Date('2026-01-28T08:00:00+00:00').getTime()
 
     const timer = setInterval(() => {
       const now = new Date().getTime()
